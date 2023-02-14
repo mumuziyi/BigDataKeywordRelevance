@@ -2,23 +2,22 @@ package uk.ac.gla.dcs.bigdata.apps;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.ForeachFunction;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
+import org.apache.spark.util.LongAccumulator;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
-import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsTransformation;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsWordProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.QueryProcessor;
-import uk.ac.gla.dcs.bigdata.studentstructures.ContentEssential;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -113,12 +112,36 @@ public class AssessedExercise {
         Dataset<Query> processedQueries = queries.map(new QueryProcessor(), Encoders.bean(Query.class));
 
 //        Testing
-        processedNewsDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
-            System.out.println(newsEssential.getContents().get(0).getContent());
+//        processedNewsDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
+//            System.out.println(newsEssential.getContents().get(0).getContent());
+//        });
+//        processedQueries.foreach((ForeachFunction<Query>) query -> {
+//            System.out.println(query.getOriginalQuery());
+//        });
+//        Get the total number of news articles
+        long newsCount = newsEssentialDataset.count();
+//        Create a list to store the length of each news article
+        List<Integer> lengthList = new ArrayList<>();
+        newsEssentialDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
+            var tmp_length = 0;
+            for (var content : newsEssential.getContents()) {
+                tmp_length += content.getContent().split(" ").length;
+                System.out.println("LENGTH: " + tmp_length);
+            }
+            lengthList.add(tmp_length);
         });
-        processedQueries.foreach((ForeachFunction<Query>) query -> {
-            System.out.println(query.getOriginalQuery());
+//        Using accumulator to calculate the average length of news articles
+        LongAccumulator accumulator = spark.sparkContext().longAccumulator();
+        newsEssentialDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
+            var tmp_length = 0;
+            for (var content : newsEssential.getContents()) {
+                tmp_length += content.getContent().split(" ").length;
+            }
+            accumulator.add(tmp_length);
         });
+
+        System.out.println("AVERAGE LENGTH: " + accumulator.value() / newsCount);
+
 
         return null; // replace this with the the list of DocumentRanking output by your topology
     }
