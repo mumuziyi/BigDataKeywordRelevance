@@ -1,6 +1,7 @@
 package uk.ac.gla.dcs.bigdata.studentstructures;
 
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
+import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -41,6 +42,13 @@ public class ContentEssential implements Serializable {
         }
         return essentials;
 
+    }
+
+    public ContentEssential convert(){
+        TextPreProcessor processor = new TextPreProcessor();
+        List<String> processed_strings = processor.process(this.content);
+        String content = processed_strings.toString();
+        return new ContentEssential(content, this.subtype, this.type);
     }
 
 }
