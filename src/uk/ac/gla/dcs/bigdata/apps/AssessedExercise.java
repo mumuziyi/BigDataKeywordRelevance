@@ -1,10 +1,13 @@
 package uk.ac.gla.dcs.bigdata.apps;
 
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.function.ForeachFunction;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import scala.Function1;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
@@ -13,9 +16,11 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentstructures.ContentEssential;
+import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
 
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -103,24 +108,34 @@ public class AssessedExercise {
         // Your Spark Topology should be defined here
         //----------------------------------------------------------------
         TextPreProcessor preProcessor = new TextPreProcessor();
-//		First convert all the news articles into NewsEssential objects
-//		Dataset<NewsEssential> newsEssential = news.map((Function1<NewsArticle, NewsEssential>) newsArticle -> {
-//			String id = newsArticle.getId();
-//			String title = newsArticle.getTitle();
-//			List<ContentItem> contents = newsArticle.getContents();
-//			NewsEssential newsEssential1 = new NewsEssential(id, title, contents);
-//			return newsEssential1;
-//		}, Encoders.bean(NewsEssential.class));
 
-//		For each of the news, print out the length of the contents
-        news.foreach((NewsArticle newsArticle) -> {
+//        Map each news article to a NewsEssential object, store them in a new Dataset
+//        Done RIGHT.
+        Dataset<NewsEssential> new_news = news.map((MapFunction<NewsArticle, NewsEssential>) newsArticle -> {
             String id = newsArticle.getId();
             String title = newsArticle.getTitle();
             List<ContentItem> items = newsArticle.getContents();
             List<ContentEssential> contentEssentials = ContentEssential.convert(items);
-            System.out.println("id: " + id + " title: " + title + " contents: " + contentEssentials.size());
-        });
+            NewsEssential newsEssential1 = new NewsEssential(id, title, contentEssentials);
+            return newsEssential1;
+        }, Encoders.bean(NewsEssential.class));
 
+        Dataset<NewsEssential> processed_news = new_news.map((MapFunction<NewsEssential, NewsEssential>) newsEssential -> {
+                    String id = newsEssential.getId();
+                    String title = newsEssential.getTitle();
+                    List<ContentEssential> contentEssentials = newsEssential.getContents();
+                    List<ContentEssential> processed_contentEssentials = contentEssentials.stream().map(contentEssential -> {
+                        String processed_text = preProcessor.process(contentEssential.getContent()).toString();
+                        return new ContentEssential(processed_text,contentEssential.getSubtype(),contentEssential.getType());
+                    }).collect(Collectors.toList());
+                    NewsEssential newsEssential1 = new NewsEssential(id, title, processed_contentEssentials);
+                    return newsEssential1;
+                }, Encoders.bean(NewsEssential.class));
+
+
+//        newsEssentials.forEach(newsEssential -> {
+//            System.out.println(newsEssential.getId());
+//        });
 //		For each of the newsEssential objects, we need to get the contents, it contains a list of ContentItem objects
 
 
