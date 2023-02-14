@@ -9,9 +9,12 @@ import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.studentfunctions.MyFunctions;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsTransformation;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsWordProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.QueryProcessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.map.ProcessNewsArticle;
+import uk.ac.gla.dcs.bigdata.studentfunctions.map.ProcessQuery;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
 
 import java.io.File;
@@ -63,29 +66,33 @@ public class AssessedExercise {
         String newsFile = System.getenv("bigdata.news");
         if (newsFile == null)
             newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+//
+        MyFunctions myFunctions = new MyFunctions(newsFile,queryFile,spark);
+        myFunctions.process();
+
 
         // Call the student's code
-        List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
+//        List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
 
         // Close the spark session
         spark.close();
 
         // Check if the code returned any results
-        if (results == null)
-            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
-        else {
-
-            // We have set of output rankings, lets write to disk
-
-            // Create a new folder
-            File outDirectory = new File("results/" + System.currentTimeMillis());
-            if (!outDirectory.exists()) outDirectory.mkdir();
-
-            // Write the ranking for each query as a new file
-            for (DocumentRanking rankingForQuery : results) {
-                rankingForQuery.write(outDirectory.getAbsolutePath());
-            }
-        }
+//        if (results == null)
+//            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
+//        else {
+//
+//            // We have set of output rankings, lets write to disk
+//
+//            // Create a new folder
+//            File outDirectory = new File("results/" + System.currentTimeMillis());
+//            if (!outDirectory.exists()) outDirectory.mkdir();
+//
+//            // Write the ranking for each query as a new file
+//            for (DocumentRanking rankingForQuery : results) {
+//                rankingForQuery.write(outDirectory.getAbsolutePath());
+//            }
+//        }
 
 
     }
@@ -126,7 +133,7 @@ public class AssessedExercise {
             var tmp_length = 0;
             for (var content : newsEssential.getContents()) {
                 tmp_length += content.getContent().split(" ").length;
-                System.out.println("LENGTH: " + tmp_length);
+//                System.out.println("LENGTH: " + tmp_length);
             }
             lengthList.add(tmp_length);
         });

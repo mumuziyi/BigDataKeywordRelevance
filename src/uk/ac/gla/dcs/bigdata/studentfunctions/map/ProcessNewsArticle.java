@@ -17,7 +17,7 @@ public class ProcessNewsArticle implements MapFunction<NewsArticle,NewsArticle> 
             List<String> temp = processor.process(contentItem.getContent());
             StrBuilder sb = new StrBuilder();
             for (String str : temp){
-                sb.append(str);
+                sb.append(str + " ");
             }
             contentItem.setContent(sb.toString());
         }

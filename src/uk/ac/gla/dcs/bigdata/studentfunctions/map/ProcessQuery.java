@@ -15,7 +15,7 @@ public class ProcessQuery implements MapFunction<Query,Query> {
         List<String> ProcessedList = processor.process(value.getOriginalQuery());
         StrBuilder sb = new StrBuilder();
         for (String str: ProcessedList){
-            sb.append(str);
+            sb.append(str + " ");
         }
         value.setOriginalQuery(sb.toString());
         return value;
