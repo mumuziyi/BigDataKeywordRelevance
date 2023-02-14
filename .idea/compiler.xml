@@ -9,8 +9,5 @@
         <module name="BigData-AE" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="BigData-AE" target="11" />
-    </bytecodeTargetLevel>
   </component>
 </project>

@@ -12,6 +12,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsWordProcessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.QueryProcessor;
 import uk.ac.gla.dcs.bigdata.studentstructures.ContentEssential;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
 
@@ -119,13 +120,13 @@ public class AssessedExercise {
 //		For each of the newsEssential objects, we need to get the contents, it contains a list of ContentItem objects
 
         Dataset<NewsEssential> processed_news = new_news.map(new NewsWordProcessor(), Encoders.bean(NewsEssential.class));
-
+        Dataset<Query> processed_queries = queries.map(new QueryProcessor(), Encoders.bean(Query.class));
         processed_news.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
             System.out.println(newsEssential.getContents().get(0).getContent());
         });
-
-
-
+        processed_queries.foreach((ForeachFunction<Query>) query -> {
+            System.out.println(query.getOriginalQuery());
+        });
         return null; // replace this with the the list of DocumentRanking output by your topology
     }
 
