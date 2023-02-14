@@ -3,11 +3,7 @@ package uk.ac.gla.dcs.bigdata.apps;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.ForeachFunction;
 import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import scala.Function1;
+import org.apache.spark.sql.*;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
@@ -15,12 +11,12 @@ import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.NewsWordProcessor;
 import uk.ac.gla.dcs.bigdata.studentstructures.ContentEssential;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
 
 import java.io.File;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -120,23 +116,14 @@ public class AssessedExercise {
             return newsEssential1;
         }, Encoders.bean(NewsEssential.class));
 
-        Dataset<NewsEssential> processed_news = new_news.map((MapFunction<NewsEssential, NewsEssential>) newsEssential -> {
-                    String id = newsEssential.getId();
-                    String title = newsEssential.getTitle();
-                    List<ContentEssential> contentEssentials = newsEssential.getContents();
-                    List<ContentEssential> processed_contentEssentials = contentEssentials.stream().map(contentEssential -> {
-                        String processed_text = preProcessor.process(contentEssential.getContent()).toString();
-                        return new ContentEssential(processed_text,contentEssential.getSubtype(),contentEssential.getType());
-                    }).collect(Collectors.toList());
-                    NewsEssential newsEssential1 = new NewsEssential(id, title, processed_contentEssentials);
-                    return newsEssential1;
-                }, Encoders.bean(NewsEssential.class));
-
-
-//        newsEssentials.forEach(newsEssential -> {
-//            System.out.println(newsEssential.getId());
-//        });
 //		For each of the newsEssential objects, we need to get the contents, it contains a list of ContentItem objects
+
+        Dataset<NewsEssential> processed_news = new_news.map(new NewsWordProcessor(), Encoders.bean(NewsEssential.class));
+
+        processed_news.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
+            System.out.println(newsEssential.getContents().get(0).getContent());
+        });
+
 
 
         return null; // replace this with the the list of DocumentRanking output by your topology
