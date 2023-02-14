@@ -14,6 +14,8 @@ import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsTransformation;
 import uk.ac.gla.dcs.bigdata.studentfunctions.NewsWordProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.QueryProcessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.map.ProcessNewsArticle;
+import uk.ac.gla.dcs.bigdata.studentfunctions.map.ProcessQuery;
 import uk.ac.gla.dcs.bigdata.studentstructures.ContentEssential;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
 
@@ -65,28 +67,45 @@ public class AssessedExercise {
         if (newsFile == null)
             newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
 
+        Dataset<Row> queryFilesAsRowTable = spark.read().text(queryFile);
+        Dataset<Row> newsFileAsRowTable = spark.read().text(newsFile);
+
+        Dataset<Query> queryDataset = queryFilesAsRowTable.map(new QueryFormaterMap(),Encoders.bean(Query.class));
+        Dataset<NewsArticle> newsArticleDataset = newsFileAsRowTable.map(new NewsFormaterMap(),Encoders.bean(NewsArticle.class));
+
+        Dataset<NewsArticle> processedArticleDataset = newsArticleDataset.map(new ProcessNewsArticle(),Encoders.bean(NewsArticle.class));
+        Dataset<Query> processedQueryDataset = queryDataset.map(new ProcessQuery(),Encoders.bean(Query.class));
+
+        List<NewsArticle> list = processedArticleDataset.collectAsList();
+
+        for (NewsArticle newsArticle: list){
+            System.out.println(newsArticle.getContents().get(0).getContent());
+        }
+
+
+
         // Call the student's code
-        List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
+//        List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
 
         // Close the spark session
         spark.close();
 
         // Check if the code returned any results
-        if (results == null)
-            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
-        else {
-
-            // We have set of output rankings, lets write to disk
-
-            // Create a new folder
-            File outDirectory = new File("results/" + System.currentTimeMillis());
-            if (!outDirectory.exists()) outDirectory.mkdir();
-
-            // Write the ranking for each query as a new file
-            for (DocumentRanking rankingForQuery : results) {
-                rankingForQuery.write(outDirectory.getAbsolutePath());
-            }
-        }
+//        if (results == null)
+//            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
+//        else {
+//
+//            // We have set of output rankings, lets write to disk
+//
+//            // Create a new folder
+//            File outDirectory = new File("results/" + System.currentTimeMillis());
+//            if (!outDirectory.exists()) outDirectory.mkdir();
+//
+//            // Write the ranking for each query as a new file
+//            for (DocumentRanking rankingForQuery : results) {
+//                rankingForQuery.write(outDirectory.getAbsolutePath());
+//            }
+//        }
 
 
     }
@@ -105,6 +124,7 @@ public class AssessedExercise {
         //----------------------------------------------------------------
         // Your Spark Topology should be defined here
         //----------------------------------------------------------------
+        TextPreProcessor preProcessor = new TextPreProcessor();
 
 //        Map each news article to a NewsEssential object, store them in a new Dataset
         Dataset<NewsEssential> newsEssentialDataset = news.map(new NewsTransformation(), Encoders.bean(NewsEssential.class));
