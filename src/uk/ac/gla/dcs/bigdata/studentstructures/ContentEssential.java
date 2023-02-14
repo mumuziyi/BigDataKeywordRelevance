@@ -46,7 +46,6 @@ public class ContentEssential implements Serializable {
 
     public ContentEssential convert(){
         TextPreProcessor processor = new TextPreProcessor();
-        List<ContentEssential> essentials = new ArrayList<>();
         List<String> processed_strings = processor.process(this.content);
         String content = processed_strings.toString();
         return new ContentEssential(content, this.subtype, this.type);
