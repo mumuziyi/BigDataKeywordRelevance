@@ -12,13 +12,13 @@ import java.security.PublicKey;
 
 public class DPHCalculateMap implements MapFunction<Tuple3<NewsArticle,Integer,Short>,Tuple2<NewsArticle,Double>> {
 
-    LongAccumulator termCountInAllDocument;
-    LongAccumulator fileCountAccumulator;
+    long fillCountAll;
+    long termCountAll;
 
     long count;
-    public DPHCalculateMap(LongAccumulator fileCountAccumulator, LongAccumulator termCountInAllDocument, long count){
-        this.fileCountAccumulator = fileCountAccumulator;
-        this.termCountInAllDocument = termCountInAllDocument;
+    public DPHCalculateMap(long fileCountAll, long termCountAll, long count){
+        this.fillCountAll = fileCountAll;
+        this.termCountAll = termCountAll;
         this.count = count;
 
     }
@@ -26,11 +26,15 @@ public class DPHCalculateMap implements MapFunction<Tuple3<NewsArticle,Integer,S
     @Override
     public Tuple2<NewsArticle, Double> call(Tuple3<NewsArticle, Integer, Short> value) throws Exception {
         Tuple3<NewsArticle, Integer, Short> test = value;
+        Double DPHScore = 0.0;
 
-        double averageLength = fileCountAccumulator.value()/count;
+        double averageLength = (double)fillCountAll/count;
+        if (test._2() == 0){
 
-        Double DPHScore = DPHScorer.getDPHScore(test._3(), Math.toIntExact(termCountInAllDocument.value()),test._2(),
-                averageLength,count);
+        }else {
+             DPHScore = DPHScorer.getDPHScore(test._3(), Math.toIntExact(termCountAll),test._2(),
+                    averageLength,count);
+        }
 
         return new Tuple2<>(value._1(),DPHScore);
     }

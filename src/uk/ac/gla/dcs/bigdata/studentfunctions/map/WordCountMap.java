@@ -37,6 +37,9 @@ public class WordCountMap implements MapFunction<NewsArticle, Tuple3<NewsArticle
         }
 
         List<ContentItem> contentItems = value.getContents();
+        if (contentItems == null){
+            return new Tuple3<>(value,thisFileCount,thisTermCount);
+        }
 
         for (ContentItem contentItem: contentItems){
             if (contentItem.getSubtype() != null && contentItem.getSubtype().equals("paragraph")){
@@ -56,7 +59,6 @@ public class WordCountMap implements MapFunction<NewsArticle, Tuple3<NewsArticle
 
             }
         }
-        System.out.println("finish one vale");
         return new Tuple3<>(value,thisFileCount,thisTermCount);
     }
 

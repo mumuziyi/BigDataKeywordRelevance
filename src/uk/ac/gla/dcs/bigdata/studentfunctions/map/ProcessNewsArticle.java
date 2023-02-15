@@ -30,6 +30,10 @@ public class ProcessNewsArticle implements MapFunction<NewsArticle,NewsArticle> 
             }
             contentItem.setContent(contentSB.toString());
         }
+
+        if (value.getTitle().equals("")){
+            value.setContents(null);
+        }
         return value;
     }
 }
