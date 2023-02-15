@@ -68,32 +68,32 @@ public class AssessedExercise {
         if (newsFile == null)
             newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
 //
-//        MyFunctions myFunctions = new MyFunctions(newsFile,queryFile,spark);
-//        myFunctions.process();
+        MyFunctions myFunctions = new MyFunctions(newsFile,queryFile,spark);
+        myFunctions.process();
 
 
         // Call the student's code
-        List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
+//        List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
 
         // Close the spark session
         spark.close();
 
         // Check if the code returned any results
-        if (results == null)
-            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
-        else {
-
-            // We have set of output rankings, lets write to disk
-
-            // Create a new folder
-            File outDirectory = new File("results/" + System.currentTimeMillis());
-            if (!outDirectory.exists()) outDirectory.mkdir();
-
-            // Write the ranking for each query as a new file
-            for (DocumentRanking rankingForQuery : results) {
-                rankingForQuery.write(outDirectory.getAbsolutePath());
-            }
-        }
+//        if (results == null)
+//            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
+//        else {
+//
+//            // We have set of output rankings, lets write to disk
+//
+//            // Create a new folder
+//            File outDirectory = new File("results/" + System.currentTimeMillis());
+//            if (!outDirectory.exists()) outDirectory.mkdir();
+//
+//            // Write the ranking for each query as a new file
+//            for (DocumentRanking rankingForQuery : results) {
+//                rankingForQuery.write(outDirectory.getAbsolutePath());
+//            }
+//        }
 
 
     }
