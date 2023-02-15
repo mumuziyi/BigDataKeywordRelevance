@@ -12,14 +12,23 @@ public class ProcessNewsArticle implements MapFunction<NewsArticle,NewsArticle> 
     @Override
     public NewsArticle call(NewsArticle value) throws Exception {
         TextPreProcessor processor = new TextPreProcessor();
+        // process title
+        List<String> title = processor.process(value.getTitle());
+        StrBuilder titleSB = new StrBuilder();
+        for (String str : title){
+            titleSB.append(str + " ");
+        }
+        value.setTitle(titleSB.toString());
+
         List<ContentItem> contentItems = value.getContents();
         for (ContentItem contentItem : contentItems){
+            // process content
             List<String> temp = processor.process(contentItem.getContent());
-            StrBuilder sb = new StrBuilder();
+            StrBuilder contentSB = new StrBuilder();
             for (String str : temp){
-                sb.append(str + " ");
+                contentSB.append(str + " ");
             }
-            contentItem.setContent(sb.toString());
+            contentItem.setContent(contentSB.toString());
         }
         return value;
     }
