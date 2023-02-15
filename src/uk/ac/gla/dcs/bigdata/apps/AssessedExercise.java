@@ -4,15 +4,14 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.ForeachFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.util.LongAccumulator;
+import scala.jdk.IntAccumulator;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.studentfunctions.MyFunctions;
-import uk.ac.gla.dcs.bigdata.studentfunctions.NewsTransformation;
-import uk.ac.gla.dcs.bigdata.studentfunctions.NewsWordProcessor;
-import uk.ac.gla.dcs.bigdata.studentfunctions.QueryProcessor;
+import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
+import uk.ac.gla.dcs.bigdata.studentfunctions.*;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.ProcessNewsArticle;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.ProcessQuery;
 import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
@@ -58,6 +57,7 @@ public class AssessedExercise {
                                      .getOrCreate();
 
 
+
         // Get the location of the input queries
         String queryFile = System.getenv("bigdata.queries");
         if (queryFile == null) queryFile = "data/queries.list"; // default is a sample with 3 queries
@@ -67,32 +67,32 @@ public class AssessedExercise {
         if (newsFile == null)
             newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
 //
-        MyFunctions myFunctions = new MyFunctions(newsFile,queryFile,spark);
-        myFunctions.process();
+//        MyFunctions myFunctions = new MyFunctions(newsFile,queryFile,spark);
+//        myFunctions.process();
 
 
         // Call the student's code
-//        List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
+        List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
 
         // Close the spark session
         spark.close();
 
         // Check if the code returned any results
-//        if (results == null)
-//            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
-//        else {
-//
-//            // We have set of output rankings, lets write to disk
-//
-//            // Create a new folder
-//            File outDirectory = new File("results/" + System.currentTimeMillis());
-//            if (!outDirectory.exists()) outDirectory.mkdir();
-//
-//            // Write the ranking for each query as a new file
-//            for (DocumentRanking rankingForQuery : results) {
-//                rankingForQuery.write(outDirectory.getAbsolutePath());
-//            }
-//        }
+        if (results == null)
+            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
+        else {
+
+            // We have set of output rankings, lets write to disk
+
+            // Create a new folder
+            File outDirectory = new File("results/" + System.currentTimeMillis());
+            if (!outDirectory.exists()) outDirectory.mkdir();
+
+            // Write the ranking for each query as a new file
+            for (DocumentRanking rankingForQuery : results) {
+                rankingForQuery.write(outDirectory.getAbsolutePath());
+            }
+        }
 
 
     }
@@ -133,7 +133,6 @@ public class AssessedExercise {
             var tmp_length = 0;
             for (var content : newsEssential.getContents()) {
                 tmp_length += content.getContent().split(" ").length;
-//                System.out.println("LENGTH: " + tmp_length);
             }
             lengthList.add(tmp_length);
         });
@@ -147,10 +146,22 @@ public class AssessedExercise {
             accumulator.add(tmp_length);
         });
 
-        System.out.println("AVERAGE LENGTH: " + accumulator.value() / newsCount);
+        double averageLength = accumulator.value() / newsCount;
+        LongAccumulator term_accumulator = spark.sparkContext().longAccumulator();
+        var freqInCorpus = TermFrequencyCorpus.getTermFrequencyCorpus("finance", processedNewsDataset, term_accumulator);
+        System.out.println("Frequency in corpus for finance is " + freqInCorpus);
+        System.out.println("Average length is " + averageLength);
+//        processedNewsDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
+//            double score = DPHScorer.getDPHScore(newsEssential.getQueryFrequency("finance"),freqInCorpus, newsEssential.getLength(), averageLength, processedNewsDataset.count());
+//            System.out.println("Score for finance is " + score);
+//        });
 
 
-        return null; // replace this with the the list of DocumentRanking output by your topology
+//        Perform the query execution for every query in the processedQueries Dataset
+//
+
+
+        return null; // replace this with the list of DocumentRanking output by your topology
     }
 
 
