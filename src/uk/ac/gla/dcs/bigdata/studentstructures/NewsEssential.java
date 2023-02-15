@@ -26,4 +26,23 @@ public class NewsEssential implements Serializable {
     public List<ContentEssential> getContents() {
         return contents;
     }
+
+    public short getQueryFrequency(String query) {
+        short frequency = 0;
+        for (ContentEssential content : contents) {
+//            If the content contains the query string, increase the frequency by 1
+            if (content.getContent().contains(query)) {
+                frequency++;
+            }
+        }
+        return frequency;
     }
+
+    public int getLength(){
+        int length = 0;
+        for (ContentEssential content : contents) {
+            length += content.getContent().split(" ").length;
+        }
+        return length;
+    }
+}

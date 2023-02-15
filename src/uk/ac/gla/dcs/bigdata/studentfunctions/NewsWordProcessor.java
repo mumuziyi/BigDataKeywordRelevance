@@ -13,7 +13,8 @@ public class NewsWordProcessor implements MapFunction<NewsEssential, NewsEssenti
     @Override
     public NewsEssential call(NewsEssential value) throws Exception {
         List<ContentEssential> original_contents = value.getContents();
-        List<ContentEssential> processed_contents = original_contents.stream().map(ContentEssential::convert).collect(Collectors.toList());
+        List<ContentEssential> processed_contents;
+        processed_contents = original_contents.stream().map(ContentEssential::convert).collect(Collectors.toList());
         return new NewsEssential(value.getId(), value.getTitle(), processed_contents);
     }
 }
