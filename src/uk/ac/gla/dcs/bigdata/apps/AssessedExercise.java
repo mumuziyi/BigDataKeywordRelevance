@@ -2,6 +2,7 @@ package uk.ac.gla.dcs.bigdata.apps;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.ForeachFunction;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.util.LongAccumulator;
 import scala.jdk.IntAccumulator;
@@ -149,12 +150,18 @@ public class AssessedExercise {
         double averageLength = accumulator.value() / newsCount;
         LongAccumulator term_accumulator = spark.sparkContext().longAccumulator();
         var freqInCorpus = TermFrequencyCorpus.getTermFrequencyCorpus("finance", processedNewsDataset, term_accumulator);
+        var corpusDocumentCount = processedNewsDataset.count();
         System.out.println("Frequency in corpus for finance is " + freqInCorpus);
         System.out.println("Average length is " + averageLength);
-//        processedNewsDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
-//            double score = DPHScorer.getDPHScore(newsEssential.getQueryFrequency("finance"),freqInCorpus, newsEssential.getLength(), averageLength, processedNewsDataset.count());
-//            System.out.println("Score for finance is " + score);
-//        });
+        Dataset<Integer> scores = processedNewsDataset.map((MapFunction<NewsEssential, Integer>) newsEssential -> {
+            double score = DPHScorer.getDPHScore(newsEssential.getQueryFrequency("finance"),freqInCorpus, newsEssential.getLength(), averageLength, corpusDocumentCount);
+            return (int) score;
+        }, Encoders.INT());
+        scores.foreach((ForeachFunction<Integer>) integer -> {
+            if(integer > 0) {
+                System.out.println(integer + " is the score");
+            }
+        });
 
 
 //        Perform the query execution for every query in the processedQueries Dataset
