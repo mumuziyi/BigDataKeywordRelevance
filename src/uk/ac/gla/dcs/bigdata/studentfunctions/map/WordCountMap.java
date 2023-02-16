@@ -2,18 +2,20 @@ package uk.ac.gla.dcs.bigdata.studentfunctions.map;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.util.LongAccumulator;
-import org.terrier.matching.models.aftereffect.L;
-import scala.Tuple2;
 import scala.Tuple3;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.studentstructures.SimplifiedNewsArticle;
 
 import java.util.List;
 
+/**
+ * This Map Function takes a {@link SimplifiedNewsArticle} and count the number of a specific term in the title and content.
+ * <br>
+ * It returns a Tuple in the form of (term, fileCount, termCount)
+ */
 public class WordCountMap implements MapFunction<SimplifiedNewsArticle, Tuple3<String,Integer, Short>> {
-    LongAccumulator fileCount = new LongAccumulator();
-    LongAccumulator termCount = new LongAccumulator();
+    LongAccumulator fileCount;
+    LongAccumulator termCount;
     String term;
 
     public WordCountMap(LongAccumulator longAccumulator, LongAccumulator termAccount, String term){
@@ -33,8 +35,8 @@ public class WordCountMap implements MapFunction<SimplifiedNewsArticle, Tuple3<S
             String title = value.getFilteredTitle();
             fileCount.add(title.split(" ").length);
             thisFileCount += title.split(" ").length;
-            termCount.add(getNumber(title, term));
-            thisTermCount += getNumber(title,term);
+            termCount.add(getCountByTerm(title, term));
+            thisTermCount += getCountByTerm(title,term);
         }
 
         List<ContentItem> contentItems = value.getContents();
@@ -49,7 +51,7 @@ public class WordCountMap implements MapFunction<SimplifiedNewsArticle, Tuple3<S
                 fileCount.add(contentLength);
                 thisFileCount += contentLength;
 
-                long Count = getNumber(content,term);
+                long Count = getCountByTerm(content,term);
                 termCount.add(Count);
                 thisTermCount += Count;
 
@@ -63,7 +65,7 @@ public class WordCountMap implements MapFunction<SimplifiedNewsArticle, Tuple3<S
         return new Tuple3<>(value.getOriginalTitle(),thisFileCount,thisTermCount);
     }
 
-    public int getNumber(String str, String term){
+    public int getCountByTerm(String str, String term){
         int ans = 0;
         String[] tokens = str.split(" ");
         for (int i = 0; i < tokens.length; i++){

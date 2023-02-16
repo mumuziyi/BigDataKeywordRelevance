@@ -1,19 +1,20 @@
 package uk.ac.gla.dcs.bigdata.studentstructures;
 
-import org.apache.commons.lang.text.StrBuilder;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * A Simpler version of {@link uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle} that only contains the id, contents, original title and filtered title.
+ * <br>
+ * This class is used to reduce the amount of data that is sent between the driver and the executors.
+ */
 public class SimplifiedNewsArticle implements Serializable {
     private String id;
     private List<ContentItem> contents;
     private String originalTitle;
     private String filteredTitle;
-    public SimplifiedNewsArticle(){};
 
     public SimplifiedNewsArticle(String id, List<ContentItem> contents, String originalTitle, String filteredTitle) {
         this.id = id;

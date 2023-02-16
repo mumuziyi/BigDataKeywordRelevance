@@ -5,25 +5,20 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.execution.columnar.MAP;
 import org.apache.spark.util.LongAccumulator;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.reflect.ClassTag;
-import scala.reflect.internal.Trees;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
-import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
+import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.MyDPHMergeStructure;
 import uk.ac.gla.dcs.bigdata.studentstructures.SimplifiedNewsArticle;
 
-import javax.xml.crypto.Data;
 import java.util.*;
 
 public class MyFunctions {
@@ -44,12 +39,12 @@ public class MyFunctions {
         Dataset<Query> queryDataset = queryFilesAsRowTable.map(new QueryFormaterMap(), Encoders.bean(Query.class));
         Dataset<NewsArticle> newsArticleDataset = newsFileAsRowTable.map(new NewsFormaterMap(),Encoders.bean(NewsArticle.class));
 
-        Dataset<NewsArticle> processedArticleDataset = newsArticleDataset.map(new ProcessNewsArticle(),Encoders.bean(NewsArticle.class));
+        Dataset<SimplifiedNewsArticle> simplifiedNewsArticleDataset = newsArticleDataset.map(new ProcessNewsArticle(), Encoders.bean(SimplifiedNewsArticle.class));
+//        Dataset<NewsArticle> processedArticleDataset = newsArticleDataset.map(new ProcessNewsArticle(),Encoders.bean(NewsArticle.class));
         Dataset<Query> processedQueryDataset = queryDataset.map(new ProcessQuery(),Encoders.bean(Query.class));
 
-
-        Dataset<SimplifiedNewsArticle> simplifiedNewsArticleDataset =
-                processedArticleDataset.map(new MapNewsToSimpleNews(),Encoders.bean(SimplifiedNewsArticle.class));
+//        Dataset<SimplifiedNewsArticle> simplifiedNewsArticleDataset =
+//                processedArticleDataset.map(new MapNewsToSimpleNews(),Encoders.bean(SimplifiedNewsArticle.class));
 
 //        LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
         //计算所有文件的总字符数
@@ -112,10 +107,10 @@ public class MyFunctions {
                     finalList.add(mergedList.get(i));
                 }
             }
-            System.out.println("Final list size: " + finalList.size());
         }
 
         System.out.println(fileCountAccumulator.value());
+        List<RankedResult> rankedResultList = new ArrayList<>();
 
     }
 
