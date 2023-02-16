@@ -113,6 +113,8 @@ public class MyFunctions {
                 }
             }
             System.out.println("Final list size: " + finalList.size());
+            for (MyDPHMergeStructure myDPHMergeStructure: finalList)
+                System.out.println(myDPHMergeStructure.getString() + "   " + myDPHMergeStructure.getScore());
         }
 
         System.out.println(fileCountAccumulator.value());
