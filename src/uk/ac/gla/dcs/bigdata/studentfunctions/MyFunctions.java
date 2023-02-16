@@ -44,13 +44,13 @@ public class MyFunctions {
         Dataset<Query> processedQueryDataset = queryDataset.map(new ProcessQuery(),Encoders.bean(Query.class));
 
 //        LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
+
         //计算所有文件的总字符数
         LongAccumulator fileCountAccumulator = spark.sparkContext().longAccumulator();
         //记录所有文件的当前term数量
         LongAccumulator termCountInAllDocument = spark.sparkContext().longAccumulator();
 
         List<Query> queries = processedQueryDataset.collectAsList();
-
 
         // 对于每一个query进行计算
         for (Query query : queries){
@@ -87,11 +87,13 @@ public class MyFunctions {
                 }
             }
             System.out.println("Finish this query");
+
             List<MyDPHMergeStructure> mergedList = mergeDPHScoreList(entireQueryDPH);
+            System.out.println(mergedList.size());
+
             for (MyDPHMergeStructure structure: mergedList){
-                if (!structure.getNews().getTitle().equals("") && structure.getScore() > 0){
-                    System.out.println(queryRecord.toString() + ": " + structure.getNews().getTitle() + "   " + structure.getScore());
-                }
+//                System.out.println(queryRecord.toString() + ": " + structure.getNews().getTitle() + "   "
+//                        + structure.getNews().getId() +"  " +structure.getScore());
             }
         }
 
@@ -108,13 +110,19 @@ public class MyFunctions {
         for (List<Tuple2<NewsArticle,Double>> tupleList: DPHScores){
             for (Tuple2<NewsArticle,Double> tuple: tupleList){
                 if (tuple._2() > 0 ) {
+//                    Set<NewsArticle> temp = mergeMap.keySet();
+//                    if (temp.contains(tuple._1())){
+//                        System.out.println(" ++++++++++++ ");
+//                    }
                     mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0) + tuple._2());
-                }else {
-                    mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0) + 0);
                 }
-
+                else {
+                    mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0));
+                }
             }
         }
+
+
 
         List<MyDPHMergeStructure> mergedList = new ArrayList<>();
         Set<NewsArticle> keySets = mergeMap.keySet();
