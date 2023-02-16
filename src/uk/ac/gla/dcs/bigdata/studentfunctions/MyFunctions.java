@@ -1,5 +1,6 @@
 package uk.ac.gla.dcs.bigdata.studentfunctions;
 
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
@@ -8,6 +9,7 @@ import org.apache.spark.sql.execution.columnar.MAP;
 import org.apache.spark.util.LongAccumulator;
 import scala.Tuple2;
 import scala.Tuple3;
+import scala.reflect.ClassTag;
 import scala.reflect.internal.Trees;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
@@ -44,7 +46,6 @@ public class MyFunctions {
         Dataset<Query> processedQueryDataset = queryDataset.map(new ProcessQuery(),Encoders.bean(Query.class));
 
 //        LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
-
         //计算所有文件的总字符数
         LongAccumulator fileCountAccumulator = spark.sparkContext().longAccumulator();
         //记录所有文件的当前term数量
@@ -52,48 +53,49 @@ public class MyFunctions {
 
         List<Query> queries = processedQueryDataset.collectAsList();
 
+//        Broadcast the processedQueryDataset to all the nodes
+        ClassTag<Dataset<Query>> classTag = scala.reflect.ClassTag$.MODULE$.apply(Dataset.class);
+        Broadcast<Dataset<Query>> br = spark.sparkContext().broadcast(processedQueryDataset, classTag);
+
+
         // 对于每一个query进行计算
         for (Query query : queries){
             StringBuilder queryRecord = new StringBuilder();
 
             List<String> terms = query.getQueryTerms();
             // 存放每一次的结果，当这个query结束时合并结果
-            List<List<Tuple2<NewsArticle,Double>>> entireQueryDPH = new ArrayList<>();
+            List<List<Tuple2<String,Double>>> entireQueryDPH = new ArrayList<>();
 
             for (String term: terms){
                 queryRecord.append(term + "  ");
-                // 分别为，newsArticle，当前文件的长度，当前文件term的数量
-                Dataset<Tuple3<NewsArticle,Integer,Short>> articleCountTuple =
+                // 分别为，newsArticle，当前文件的长度，当前文件term的数量，这些东西jiang'bei
+                Dataset<Tuple3<String,Integer,Short>> articleCountTuple =
                         processedArticleDataset.map(new WordCountMap(fileCountAccumulator,termCountInAllDocument,term),
-                                Encoders.tuple(Encoders.bean(NewsArticle.class),Encoders.INT(),Encoders.SHORT()));
+                                Encoders.tuple(Encoders.STRING(),Encoders.INT(),Encoders.SHORT()));
                 articleCountTuple.count();
 
                 long fileCountAll = fileCountAccumulator.value();
                 long termCountAll = termCountInAllDocument.value();
 
-                Dataset<Tuple2<NewsArticle,Double>> articlesDPHScores = articleCountTuple.map(
+                Dataset<Tuple2<String,Double>> articlesDPHScores = articleCountTuple.map(
                         new DPHCalculateMap(fileCountAll,termCountAll, articleCountTuple.count()),
-                        Encoders.tuple(Encoders.bean(NewsArticle.class),Encoders.DOUBLE()));
+                        Encoders.tuple(Encoders.STRING(),Encoders.DOUBLE()));
 
                 // Print the DPH score
-                List<Tuple2<NewsArticle,Double>> tuple2s = articlesDPHScores.collectAsList();
+                List<Tuple2<String,Double>> tuple2s = articlesDPHScores.collectAsList();
+
 
                 entireQueryDPH.add(tuple2s);
 
-                for (Tuple2<NewsArticle,Double> tuple2: tuple2s){
-                    if (tuple2._2() > 0){
-//                        System.out.println(term + "  " + tuple2._1().getTitle() + "   " + tuple2._2());
-                    }
-                }
             }
             System.out.println("Finish this query");
-
             List<MyDPHMergeStructure> mergedList = mergeDPHScoreList(entireQueryDPH);
+            Collections.sort(mergedList);
             System.out.println(mergedList.size());
-
             for (MyDPHMergeStructure structure: mergedList){
-//                System.out.println(queryRecord.toString() + ": " + structure.getNews().getTitle() + "   "
-//                        + structure.getNews().getId() +"  " +structure.getScore());
+                if (!structure.getString().equals("")){
+                    System.out.println(queryRecord.toString() + ": " + structure.getString() + "   " + structure.getScore());
+                }
             }
         }
 
@@ -101,33 +103,28 @@ public class MyFunctions {
 
     }
 
-    public List<MyDPHMergeStructure> mergeDPHScoreList(List<List<Tuple2<NewsArticle,Double>>> DPHScores){
+    public List<MyDPHMergeStructure> mergeDPHScoreList(List<List<Tuple2<String,Double>>> DPHScores){
 
-        Map<NewsArticle,Double> mergeMap = new HashMap<>();
+        Map<String,Double> mergeMap = new HashMap<>();
 
         int length = DPHScores.size();
 
-        for (List<Tuple2<NewsArticle,Double>> tupleList: DPHScores){
-            for (Tuple2<NewsArticle,Double> tuple: tupleList){
+        for (List<Tuple2<String,Double>> tupleList: DPHScores){
+            for (Tuple2<String,Double> tuple: tupleList){
                 if (tuple._2() > 0 ) {
-//                    Set<NewsArticle> temp = mergeMap.keySet();
-//                    if (temp.contains(tuple._1())){
-//                        System.out.println(" ++++++++++++ ");
-//                    }
                     mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0) + tuple._2());
                 }
-                else {
-                    mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0));
-                }
+//                else {
+//                    mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0) + 0);
+//                }
+
             }
         }
 
-
-
         List<MyDPHMergeStructure> mergedList = new ArrayList<>();
-        Set<NewsArticle> keySets = mergeMap.keySet();
-        for (NewsArticle newsArticle: keySets ){
-            mergedList.add(new MyDPHMergeStructure(newsArticle,mergeMap.get(newsArticle)/length));
+        Set<String> keySets = mergeMap.keySet();
+        for (String str: keySets ){
+            mergedList.add(new MyDPHMergeStructure(str,mergeMap.get(str)/length));
         }
 
         return mergedList;

@@ -1,28 +1,10 @@
 package uk.ac.gla.dcs.bigdata.apps;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.function.ForeachFunction;
-import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.api.java.function.ReduceFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.util.LongAccumulator;
-import scala.Tuple2;
-import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
-import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
-import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
-import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.studentfunctions.MyFunctions;
-import uk.ac.gla.dcs.bigdata.studentfunctions.NewsWordProcessor;
-import uk.ac.gla.dcs.bigdata.studentfunctions.QueryProcessor;
-import uk.ac.gla.dcs.bigdata.studentfunctions.Utility;
-import uk.ac.gla.dcs.bigdata.studentfunctions.map.ContentItemPicking;
 
 import java.io.File;
-import java.util.List;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -96,45 +78,45 @@ public class AssessedExercise {
 
     }
 
-
-    public static List<DocumentRanking> rankDocuments(SparkSession spark, String queryFile, String newsFile) {
-
-        // Load queries and news articles
-        Dataset<Row> queriesjson = spark.read().text(queryFile);
-        Dataset<Row> newsjson = spark.read().text(newsFile);
-
-        // Perform an initial conversion from Dataset<Row> to Query and NewsArticle Java objects
-        Dataset<Query> queries = queriesjson.map(new QueryFormaterMap(), Encoders.bean(Query.class)); // this converts each row into a Query
-        Dataset<NewsArticle> news = newsjson.map(new NewsFormaterMap(), Encoders.bean(NewsArticle.class)); // this converts each row into a NewsArticle
-
-
-        //----------------------------------------------------------------
-        // Your Spark Topology should be defined here
-        //----------------------------------------------------------------
-//        Only keeping contentItems with sub-type "paragraph"
-        news = news.map(new ContentItemPicking(), Encoders.bean(NewsArticle.class));
-//        News with stop words removed and stemmed
-        news = news.map(new NewsWordProcessor(), Encoders.bean(NewsArticle.class));
-//        Queries with stop words removed
-        queries = queries.map(new QueryProcessor(), Encoders.bean(Query.class));
-
-//        Get the average length of the news articles
-        long average_length = news.map((MapFunction<NewsArticle, Integer>) newsArticle -> {
-            var article_length = Utility.countArticleLength(newsArticle);
-            return article_length;
-        }, Encoders.INT()).reduce((ReduceFunction<Integer>) (integer, t1) -> integer + t1) / news.count();
-
-        System.out.println("Average length is " + average_length);
-//        For each query, find its frequencies in the corpus
-        Dataset<NewsArticle> finalNews = news;
-//        Keep the queries' first column, and remove the rest
-
-//        Perform the query execution for every query in the processedQueries Dataset
 //
-
-
-        return null; // replace this with the list of DocumentRanking output by your topology
-    }
-
+//    public static List<DocumentRanking> rankDocuments(SparkSession spark, String queryFile, String newsFile) {
+//
+//        // Load queries and news articles
+//        Dataset<Row> queriesjson = spark.read().text(queryFile);
+//        Dataset<Row> newsjson = spark.read().text(newsFile);
+//
+//        // Perform an initial conversion from Dataset<Row> to Query and NewsArticle Java objects
+//        Dataset<Query> queries = queriesjson.map(new QueryFormaterMap(), Encoders.bean(Query.class)); // this converts each row into a Query
+//        Dataset<NewsArticle> news = newsjson.map(new NewsFormaterMap(), Encoders.bean(NewsArticle.class)); // this converts each row into a NewsArticle
+//
+//
+//        //----------------------------------------------------------------
+//        // Your Spark Topology should be defined here
+//        //----------------------------------------------------------------
+////        Only keeping contentItems with sub-type "paragraph"
+//        news = news.map(new ContentItemPicking(), Encoders.bean(NewsArticle.class));
+////        News with stop words removed and stemmed
+//        news = news.map(new NewsWordProcessor(), Encoders.bean(NewsArticle.class));
+////        Queries with stop words removed
+//        queries = queries.map(new QueryProcessor(), Encoders.bean(Query.class));
+//
+////        Get the average length of the news articles
+//        long average_length = news.map((MapFunction<NewsArticle, Integer>) newsArticle -> {
+//            var article_length = Utility.countArticleLength(newsArticle);
+//            return article_length;
+//        }, Encoders.INT()).reduce((ReduceFunction<Integer>) (integer, t1) -> integer + t1) / news.count();
+//
+//        System.out.println("Average length is " + average_length);
+////        For each query, find its frequencies in the corpus
+//        Dataset<NewsArticle> finalNews = news;
+////        Keep the queries' first column, and remove the rest
+//
+////        Perform the query execution for every query in the processedQueries Dataset
+////
+//
+//
+//        return null; // replace this with the list of DocumentRanking output by your topology
+//    }
+//
 
 }
