@@ -58,65 +58,7 @@ public class AssessedExercise {
         // Close the spark session
         spark.close();
 
-        // Check if the code returned any results
-//        if (results == null)
-//            System.err.println("Topology return no rankings, student code may not be implemented, skiping final write.");
-//        else {
-//
-//            // We have set of output rankings, lets write to disk
-//
-//            // Create a new folder
-//            File outDirectory = new File("results/" + System.currentTimeMillis());
-//            if (!outDirectory.exists()) outDirectory.mkdir();
-//
-//            // Write the ranking for each query as a new file
-//            for (DocumentRanking rankingForQuery : results) {
-//                rankingForQuery.write(outDirectory.getAbsolutePath());
-//            }
-//        }
-
 
     }
-
-//
-//    public static List<DocumentRanking> rankDocuments(SparkSession spark, String queryFile, String newsFile) {
-//
-//        // Load queries and news articles
-//        Dataset<Row> queriesjson = spark.read().text(queryFile);
-//        Dataset<Row> newsjson = spark.read().text(newsFile);
-//
-//        // Perform an initial conversion from Dataset<Row> to Query and NewsArticle Java objects
-//        Dataset<Query> queries = queriesjson.map(new QueryFormaterMap(), Encoders.bean(Query.class)); // this converts each row into a Query
-//        Dataset<NewsArticle> news = newsjson.map(new NewsFormaterMap(), Encoders.bean(NewsArticle.class)); // this converts each row into a NewsArticle
-//
-//
-//        //----------------------------------------------------------------
-//        // Your Spark Topology should be defined here
-//        //----------------------------------------------------------------
-////        Only keeping contentItems with sub-type "paragraph"
-//        news = news.map(new ContentItemPicking(), Encoders.bean(NewsArticle.class));
-////        News with stop words removed and stemmed
-//        news = news.map(new NewsWordProcessor(), Encoders.bean(NewsArticle.class));
-////        Queries with stop words removed
-//        queries = queries.map(new QueryProcessor(), Encoders.bean(Query.class));
-//
-////        Get the average length of the news articles
-//        long average_length = news.map((MapFunction<NewsArticle, Integer>) newsArticle -> {
-//            var article_length = Utility.countArticleLength(newsArticle);
-//            return article_length;
-//        }, Encoders.INT()).reduce((ReduceFunction<Integer>) (integer, t1) -> integer + t1) / news.count();
-//
-//        System.out.println("Average length is " + average_length);
-////        For each query, find its frequencies in the corpus
-//        Dataset<NewsArticle> finalNews = news;
-////        Keep the queries' first column, and remove the rest
-//
-////        Perform the query execution for every query in the processedQueries Dataset
-////
-//
-//
-//        return null; // replace this with the list of DocumentRanking output by your topology
-//    }
-//
 
 }
