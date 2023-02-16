@@ -1,14 +1,14 @@
 package uk.ac.gla.dcs.bigdata.studentfunctions;
 
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.execution.columnar.MAP;
 import org.apache.spark.util.LongAccumulator;
 import scala.Tuple2;
 import scala.Tuple3;
-import scala.reflect.internal.Trees;
+import scala.reflect.ClassTag;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
@@ -50,6 +50,10 @@ public class MyFunctions {
         LongAccumulator termCountInAllDocument = spark.sparkContext().longAccumulator();
 
         List<Query> queries = processedQueryDataset.collectAsList();
+
+//        Broadcast the processedQueryDataset to all the nodes
+        ClassTag<Dataset<Query>> classTag = scala.reflect.ClassTag$.MODULE$.apply(Dataset.class);
+        Broadcast<Dataset<Query>> br = spark.sparkContext().broadcast(processedQueryDataset, classTag);
 
 
         // 对于每一个query进行计算

@@ -3,24 +3,26 @@ package uk.ac.gla.dcs.bigdata.apps;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.ForeachFunction;
 import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.sql.*;
+import org.apache.spark.api.java.function.ReduceFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.util.LongAccumulator;
-import scala.jdk.IntAccumulator;
+import scala.Tuple2;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
-import uk.ac.gla.dcs.bigdata.studentfunctions.*;
-import uk.ac.gla.dcs.bigdata.studentfunctions.map.ProcessNewsArticle;
-import uk.ac.gla.dcs.bigdata.studentfunctions.map.ProcessQuery;
-import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
+import uk.ac.gla.dcs.bigdata.studentfunctions.MyFunctions;
+import uk.ac.gla.dcs.bigdata.studentfunctions.NewsWordProcessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.QueryProcessor;
+import uk.ac.gla.dcs.bigdata.studentfunctions.Utility;
+import uk.ac.gla.dcs.bigdata.studentfunctions.map.ContentItemPicking;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -47,16 +49,10 @@ public class AssessedExercise {
         String sparkSessionName = "BigDataAE"; // give the session a name
 
         // Create the Spark Configuration
-        SparkConf conf = new SparkConf()
-                                 .setMaster(sparkMasterDef)
-                                 .setAppName(sparkSessionName);
+        SparkConf conf = new SparkConf().setMaster(sparkMasterDef).setAppName(sparkSessionName);
 
         // Create the spark session
-        SparkSession spark = SparkSession
-                                     .builder()
-                                     .config(conf)
-                                     .getOrCreate();
-
+        SparkSession spark = SparkSession.builder().config(conf).getOrCreate();
 
 
         // Get the location of the input queries
@@ -66,7 +62,9 @@ public class AssessedExercise {
         // Get the location of the input news articles
         String newsFile = System.getenv("bigdata.news");
         if (newsFile == null)
+//            newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json";
             newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+
 //
         MyFunctions myFunctions = new MyFunctions(newsFile,queryFile,spark);
         myFunctions.process();
@@ -103,66 +101,33 @@ public class AssessedExercise {
 
         // Load queries and news articles
         Dataset<Row> queriesjson = spark.read().text(queryFile);
-        Dataset<Row> newsjson = spark.read().text(newsFile); // read in files as string rows, one row per article
+        Dataset<Row> newsjson = spark.read().text(newsFile);
 
         // Perform an initial conversion from Dataset<Row> to Query and NewsArticle Java objects
         Dataset<Query> queries = queriesjson.map(new QueryFormaterMap(), Encoders.bean(Query.class)); // this converts each row into a Query
         Dataset<NewsArticle> news = newsjson.map(new NewsFormaterMap(), Encoders.bean(NewsArticle.class)); // this converts each row into a NewsArticle
 
+
         //----------------------------------------------------------------
         // Your Spark Topology should be defined here
         //----------------------------------------------------------------
+//        Only keeping contentItems with sub-type "paragraph"
+        news = news.map(new ContentItemPicking(), Encoders.bean(NewsArticle.class));
+//        News with stop words removed and stemmed
+        news = news.map(new NewsWordProcessor(), Encoders.bean(NewsArticle.class));
+//        Queries with stop words removed
+        queries = queries.map(new QueryProcessor(), Encoders.bean(Query.class));
 
-//        Map each news article to a NewsEssential object, store them in a new Dataset
-        Dataset<NewsEssential> newsEssentialDataset = news.map(new NewsTransformation(), Encoders.bean(NewsEssential.class));
-//        Removing all stop words and stemming for each news article and each query
-        Dataset<NewsEssential> processedNewsDataset = newsEssentialDataset.map(new NewsWordProcessor(), Encoders.bean(NewsEssential.class));
-        Dataset<Query> processedQueries = queries.map(new QueryProcessor(), Encoders.bean(Query.class));
+//        Get the average length of the news articles
+        long average_length = news.map((MapFunction<NewsArticle, Integer>) newsArticle -> {
+            var article_length = Utility.countArticleLength(newsArticle);
+            return article_length;
+        }, Encoders.INT()).reduce((ReduceFunction<Integer>) (integer, t1) -> integer + t1) / news.count();
 
-//        Testing
-//        processedNewsDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
-//            System.out.println(newsEssential.getContents().get(0).getContent());
-//        });
-//        processedQueries.foreach((ForeachFunction<Query>) query -> {
-//            System.out.println(query.getOriginalQuery());
-//        });
-//        Get the total number of news articles
-        long newsCount = newsEssentialDataset.count();
-//        Create a list to store the length of each news article
-        List<Integer> lengthList = new ArrayList<>();
-        newsEssentialDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
-            var tmp_length = 0;
-            for (var content : newsEssential.getContents()) {
-                tmp_length += content.getContent().split(" ").length;
-            }
-            lengthList.add(tmp_length);
-        });
-//        Using accumulator to calculate the average length of news articles
-        LongAccumulator accumulator = spark.sparkContext().longAccumulator();
-        newsEssentialDataset.foreach((ForeachFunction<NewsEssential>) newsEssential -> {
-            var tmp_length = 0;
-            for (var content : newsEssential.getContents()) {
-                tmp_length += content.getContent().split(" ").length;
-            }
-            accumulator.add(tmp_length);
-        });
-
-        double averageLength = accumulator.value() / newsCount;
-        LongAccumulator term_accumulator = spark.sparkContext().longAccumulator();
-        var freqInCorpus = TermFrequencyCorpus.getTermFrequencyCorpus("finance", processedNewsDataset, term_accumulator);
-        var corpusDocumentCount = processedNewsDataset.count();
-        System.out.println("Frequency in corpus for finance is " + freqInCorpus);
-        System.out.println("Average length is " + averageLength);
-        Dataset<Integer> scores = processedNewsDataset.map((MapFunction<NewsEssential, Integer>) newsEssential -> {
-            double score = DPHScorer.getDPHScore(newsEssential.getQueryFrequency("finance"),freqInCorpus, newsEssential.getLength(), averageLength, corpusDocumentCount);
-            return (int) score;
-        }, Encoders.INT());
-        scores.foreach((ForeachFunction<Integer>) integer -> {
-            if(integer > 0) {
-                System.out.println(integer + " is the score");
-            }
-        });
-
+        System.out.println("Average length is " + average_length);
+//        For each query, find its frequencies in the corpus
+        Dataset<NewsArticle> finalNews = news;
+//        Keep the queries' first column, and remove the rest
 
 //        Perform the query execution for every query in the processedQueries Dataset
 //
