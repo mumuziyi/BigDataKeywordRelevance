@@ -130,6 +130,9 @@ public class MyFunctions {
                 if (tuple._2() > 0 ) {
                     mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0) + tuple._2());
                 }
+//                else {
+//                    mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0) + 0);
+//                }
 
             }
         }

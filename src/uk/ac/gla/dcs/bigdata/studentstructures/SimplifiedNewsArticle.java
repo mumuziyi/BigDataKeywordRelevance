@@ -2,13 +2,14 @@ package uk.ac.gla.dcs.bigdata.studentstructures;
 
 import org.apache.commons.lang.text.StrBuilder;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 
 import java.io.Serializable;
 import java.util.List;
 
 public class SimplifiedNewsArticle implements Serializable {
+
+
+    private static final long serialVersionUID = 3195489395378110063L;
     private String id;
     private List<ContentItem> contents;
     private String originalTitle;

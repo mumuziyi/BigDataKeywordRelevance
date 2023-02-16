@@ -12,6 +12,7 @@ import java.security.PublicKey;
 
 public class DPHCalculateMap implements MapFunction<Tuple3<String,Integer,Short>,Tuple2<String,Double>> {
 
+
     long fillCountAll;
     long termCountAll;
 
