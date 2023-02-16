@@ -17,6 +17,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
+import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.MyDPHMergeStructure;
@@ -91,6 +92,9 @@ public class MyFunctions {
             System.out.println("Finish this query");
             List<MyDPHMergeStructure> mergedList = mergeDPHScoreList(entireQueryDPH);
             Collections.sort(mergedList);
+
+            mergedList = getTop10(mergedList);
+
             System.out.println(mergedList.size());
             for (MyDPHMergeStructure structure: mergedList){
                 if (!structure.getString().equals("")){
@@ -103,6 +107,39 @@ public class MyFunctions {
 
     }
 
+    public List<MyDPHMergeStructure> getTop10(List<MyDPHMergeStructure> dphList){
+        List<MyDPHMergeStructure> top10List = new ArrayList<>();
+        int current = 0;
+
+        for (MyDPHMergeStructure curStructure : dphList){
+            boolean flag = false;
+            if (current == 0){
+                top10List.add(curStructure);
+                current ++;
+                continue;
+            }
+            for (int i = 0; i < current; i++){
+//                System.out.println("++" + curStructure.getString());
+//                System.out.println("--" + top10List.get(i).getString());
+                // 如果有小于0.5距离的，break，flag不会变，也就不会被添加
+                if (TextDistanceCalculator.similarity(curStructure.getString(),top10List.get(i).getString()) <= 0.5){
+                    break;
+                }
+                flag = true;
+            }
+            if (flag){
+                top10List.add(curStructure);
+                current += 1;
+            }
+
+            if (current >= 10){
+                return top10List;
+            }
+        }
+
+        return top10List;
+
+    }
     public List<MyDPHMergeStructure> mergeDPHScoreList(List<List<Tuple2<String,Double>>> DPHScores){
 
         Map<String,Double> mergeMap = new HashMap<>();
