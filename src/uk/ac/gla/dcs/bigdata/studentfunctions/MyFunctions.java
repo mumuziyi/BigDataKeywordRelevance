@@ -98,53 +98,27 @@ public class MyFunctions {
             List<MyDPHMergeStructure> mergedList = mergeDPHScoreList(entireQueryDPH);
             Collections.sort(mergedList);
 
-            mergedList = getTop10(mergedList);
-
-            System.out.println(mergedList.size());
-            for (MyDPHMergeStructure structure: mergedList){
-                if (!structure.getString().equals("")){
-                    System.out.println(queryRecord.toString() + ": " + structure.getString() + "   " + structure.getScore());
+            List<MyDPHMergeStructure> finalList = new ArrayList<>(10);
+            for(int i = 0; i <= mergedList.size(); i++){
+                if(finalList.size() == 0){
+                    finalList.add(mergedList.get(i));
+                }else if(finalList.size() < 10){
+                    for (int j = 0; j < finalList.size(); j++) {
+                        MyDPHMergeStructure finalStructure = finalList.get(j);
+                        if (TextDistanceCalculator.similarity(mergedList.get(i).getString(), finalStructure.getString()) <= 0.5) {
+                            break;
+                        }
+                    }
+                    finalList.add(mergedList.get(i));
                 }
             }
+            System.out.println("Final list size: " + finalList.size());
         }
 
         System.out.println(fileCountAccumulator.value());
 
     }
 
-    public List<MyDPHMergeStructure> getTop10(List<MyDPHMergeStructure> dphList){
-        List<MyDPHMergeStructure> top10List = new ArrayList<>();
-        int current = 0;
-
-        for (MyDPHMergeStructure curStructure : dphList){
-            boolean flag = false;
-            if (current == 0){
-                top10List.add(curStructure);
-                current ++;
-                continue;
-            }
-            for (int i = 0; i < current; i++){
-//                System.out.println("++" + curStructure.getString());
-//                System.out.println("--" + top10List.get(i).getString());
-                // 如果有小于0.5距离的，break，flag不会变，也就不会被添加
-                if (TextDistanceCalculator.similarity(curStructure.getString(),top10List.get(i).getString()) <= 0.5){
-                    break;
-                }
-                flag = true;
-            }
-            if (flag){
-                top10List.add(curStructure);
-                current += 1;
-            }
-
-            if (current >= 10){
-                return top10List;
-            }
-        }
-
-        return top10List;
-
-    }
     public List<MyDPHMergeStructure> mergeDPHScoreList(List<List<Tuple2<String,Double>>> DPHScores){
 
         Map<String,Double> mergeMap = new HashMap<>();
@@ -156,9 +130,6 @@ public class MyFunctions {
                 if (tuple._2() > 0 ) {
                     mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0) + tuple._2());
                 }
-//                else {
-//                    mergeMap.put(tuple._1(),mergeMap.getOrDefault(tuple._1(), 0.0) + 0);
-//                }
 
             }
         }
