@@ -17,6 +17,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
+import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.MyDPHMergeStructure;
@@ -35,15 +36,15 @@ public class MyFunctions {
         this.spark = spark;
     }
 
-    public void process(){
+    public void process() {
         Dataset<Row> queryFilesAsRowTable = spark.read().text(queryPath);
         Dataset<Row> newsFileAsRowTable = spark.read().text(newsPath);
 
         Dataset<Query> queryDataset = queryFilesAsRowTable.map(new QueryFormaterMap(), Encoders.bean(Query.class));
-        Dataset<NewsArticle> newsArticleDataset = newsFileAsRowTable.map(new NewsFormaterMap(),Encoders.bean(NewsArticle.class));
+        Dataset<NewsArticle> newsArticleDataset = newsFileAsRowTable.map(new NewsFormaterMap(), Encoders.bean(NewsArticle.class));
 
-        Dataset<NewsArticle> processedArticleDataset = newsArticleDataset.map(new ProcessNewsArticle(),Encoders.bean(NewsArticle.class));
-        Dataset<Query> processedQueryDataset = queryDataset.map(new ProcessQuery(),Encoders.bean(Query.class));
+        Dataset<NewsArticle> processedArticleDataset = newsArticleDataset.map(new ProcessNewsArticle(), Encoders.bean(NewsArticle.class));
+        Dataset<Query> processedQueryDataset = queryDataset.map(new ProcessQuery(), Encoders.bean(Query.class));
 
 //        LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
         //计算所有文件的总字符数
@@ -59,30 +60,30 @@ public class MyFunctions {
 
 
         // 对于每一个query进行计算
-        for (Query query : queries){
+        for (Query query : queries) {
             StringBuilder queryRecord = new StringBuilder();
 
             List<String> terms = query.getQueryTerms();
             // 存放每一次的结果，当这个query结束时合并结果
-            List<List<Tuple2<String,Double>>> entireQueryDPH = new ArrayList<>();
+            List<List<Tuple2<String, Double>>> entireQueryDPH = new ArrayList<>();
 
-            for (String term: terms){
+            for (String term : terms) {
                 queryRecord.append(term + "  ");
                 // 分别为，newsArticle，当前文件的长度，当前文件term的数量，这些东西jiang'bei
-                Dataset<Tuple3<String,Integer,Short>> articleCountTuple =
-                        processedArticleDataset.map(new WordCountMap(fileCountAccumulator,termCountInAllDocument,term),
-                                Encoders.tuple(Encoders.STRING(),Encoders.INT(),Encoders.SHORT()));
+                Dataset<Tuple3<String, Integer, Short>> articleCountTuple =
+                        processedArticleDataset.map(new WordCountMap(fileCountAccumulator, termCountInAllDocument, term),
+                                Encoders.tuple(Encoders.STRING(), Encoders.INT(), Encoders.SHORT()));
                 articleCountTuple.count();
 
                 long fileCountAll = fileCountAccumulator.value();
                 long termCountAll = termCountInAllDocument.value();
 
-                Dataset<Tuple2<String,Double>> articlesDPHScores = articleCountTuple.map(
-                        new DPHCalculateMap(fileCountAll,termCountAll, articleCountTuple.count()),
-                        Encoders.tuple(Encoders.STRING(),Encoders.DOUBLE()));
+                Dataset<Tuple2<String, Double>> articlesDPHScores = articleCountTuple.map(
+                        new DPHCalculateMap(fileCountAll, termCountAll, articleCountTuple.count()),
+                        Encoders.tuple(Encoders.STRING(), Encoders.DOUBLE()));
 
                 // Print the DPH score
-                List<Tuple2<String,Double>> tuple2s = articlesDPHScores.collectAsList();
+                List<Tuple2<String, Double>> tuple2s = articlesDPHScores.collectAsList();
 
 
                 entireQueryDPH.add(tuple2s);
@@ -92,16 +93,33 @@ public class MyFunctions {
             List<MyDPHMergeStructure> mergedList = mergeDPHScoreList(entireQueryDPH);
             Collections.sort(mergedList);
             System.out.println(mergedList.size());
-            for (MyDPHMergeStructure structure: mergedList){
-                if (!structure.getString().equals("")){
-                    System.out.println(queryRecord.toString() + ": " + structure.getString() + "   " + structure.getScore());
+//            From the first one in list, read every one of the list, compare it with every on in the new list, if their distance is over 0.5, then add it into the list
+//            Create a linkedlist of size 10
+            List<MyDPHMergeStructure> finalList = new ArrayList<>(10);
+            for(int i = 0; i <= mergedList.size(); i++){
+                if(finalList.size() == 0){
+                    finalList.add(mergedList.get(i));
+                }else if(finalList.size() < 10){
+                    for (int j = 0; j < finalList.size(); j++) {
+                        MyDPHMergeStructure finalStructure = finalList.get(j);
+                        if (TextDistanceCalculator.similarity(mergedList.get(i).getString(), finalStructure.getString()) <= 0.5) {
+                            break;
+                        }
+                    }
+                    finalList.add(mergedList.get(i));
                 }
             }
+            System.out.println("Final list size: " + finalList.size());
+
+//            Strip the final list to top 10
+            List<MyDPHMergeStructure> top10List = finalList.subList(0, 10);
+            System.out.println("Final list size: " + top10List.size());
+            for (MyDPHMergeStructure structure : top10List) {
+                System.out.println(queryRecord + ": " + structure.getString() + "   " + structure.getScore());
+            }
         }
-
-        System.out.println(fileCountAccumulator.value());
-
     }
+
 
     public List<MyDPHMergeStructure> mergeDPHScoreList(List<List<Tuple2<String,Double>>> DPHScores){
 
