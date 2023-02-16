@@ -3,7 +3,6 @@ package uk.ac.gla.dcs.bigdata.studentfunctions;
 import org.apache.spark.api.java.function.MapFunction;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
-import uk.ac.gla.dcs.bigdata.studentstructures.NewsEssential;
 
 public class QueryProcessor implements MapFunction<Query, Query> {
     @Override
