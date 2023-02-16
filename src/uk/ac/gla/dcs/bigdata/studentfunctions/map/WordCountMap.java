@@ -7,10 +7,11 @@ import scala.Tuple2;
 import scala.Tuple3;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
+import uk.ac.gla.dcs.bigdata.studentstructures.ArticleCount;
 
 import java.util.List;
 
-public class WordCountMap implements MapFunction<NewsArticle, Tuple3<NewsArticle,Integer, Short>> {
+public class WordCountMap implements MapFunction<NewsArticle, ArticleCount> {
     LongAccumulator fileCount = new LongAccumulator();
     LongAccumulator termCount = new LongAccumulator();
     String term;
@@ -22,7 +23,7 @@ public class WordCountMap implements MapFunction<NewsArticle, Tuple3<NewsArticle
     }
 
     @Override
-    public Tuple3<NewsArticle, Integer,Short> call(NewsArticle value) throws Exception {
+    public ArticleCount call(NewsArticle value) throws Exception {
 
         int thisFileCount = 0;
         short thisTermCount = 0;
@@ -38,7 +39,7 @@ public class WordCountMap implements MapFunction<NewsArticle, Tuple3<NewsArticle
 
         List<ContentItem> contentItems = value.getContents();
         if (contentItems == null){
-            return new Tuple3<>(value,thisFileCount,thisTermCount);
+            return new ArticleCount(value,thisFileCount,thisTermCount);
         }
 
         for (ContentItem contentItem: contentItems){
@@ -59,7 +60,7 @@ public class WordCountMap implements MapFunction<NewsArticle, Tuple3<NewsArticle
 
             }
         }
-        return new Tuple3<>(value,thisFileCount,thisTermCount);
+        return new ArticleCount(value,thisFileCount,thisTermCount);
     }
 
     public int getNumber(String str, String term){
