@@ -7,10 +7,11 @@ import scala.Tuple2;
 import scala.Tuple3;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
+import uk.ac.gla.dcs.bigdata.studentstructures.SimplifiedNewsArticle;
 
 import java.util.List;
 
-public class WordCountMap implements MapFunction<NewsArticle, Tuple3<String,Integer, Short>> {
+public class WordCountMap implements MapFunction<SimplifiedNewsArticle, Tuple3<String,Integer, Short>> {
     LongAccumulator fileCount = new LongAccumulator();
     LongAccumulator termCount = new LongAccumulator();
     String term;
@@ -22,14 +23,14 @@ public class WordCountMap implements MapFunction<NewsArticle, Tuple3<String,Inte
     }
 
     @Override
-    public Tuple3<String, Integer,Short> call(NewsArticle value) throws Exception {
+    public Tuple3<String, Integer,Short> call(SimplifiedNewsArticle value) throws Exception {
 
         int thisFileCount = 0;
         short thisTermCount = 0;
         int paragraph = 0;
 
-        if (value.getTitle() != null && value.getTitle().length() > 0){
-            String title = value.getTitle();
+        if (value.getFilteredTitle() != null && value.getFilteredTitle().length() > 0){
+            String title = value.getFilteredTitle();
             fileCount.add(title.split(" ").length);
             thisFileCount += title.split(" ").length;
             termCount.add(getNumber(title, term));
@@ -38,7 +39,7 @@ public class WordCountMap implements MapFunction<NewsArticle, Tuple3<String,Inte
 
         List<ContentItem> contentItems = value.getContents();
         if (contentItems == null){
-            return new Tuple3<>(value.getTitle(),thisFileCount,thisTermCount);
+            return new Tuple3<>(value.getOriginalTitle(),thisFileCount,thisTermCount);
         }
 
         for (ContentItem contentItem: contentItems){
@@ -59,7 +60,7 @@ public class WordCountMap implements MapFunction<NewsArticle, Tuple3<String,Inte
 
             }
         }
-        return new Tuple3<>(value.getTitle(),thisFileCount,thisTermCount);
+        return new Tuple3<>(value.getOriginalTitle(),thisFileCount,thisTermCount);
     }
 
     public int getNumber(String str, String term){

@@ -21,6 +21,7 @@ import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.MyDPHMergeStructure;
+import uk.ac.gla.dcs.bigdata.studentstructures.SimplifiedNewsArticle;
 
 import javax.xml.crypto.Data;
 import java.util.*;
@@ -45,6 +46,10 @@ public class MyFunctions {
 
         Dataset<NewsArticle> processedArticleDataset = newsArticleDataset.map(new ProcessNewsArticle(),Encoders.bean(NewsArticle.class));
         Dataset<Query> processedQueryDataset = queryDataset.map(new ProcessQuery(),Encoders.bean(Query.class));
+
+
+        Dataset<SimplifiedNewsArticle> simplifiedNewsArticleDataset =
+                processedArticleDataset.map(new MapNewsToSimpleNews(),Encoders.bean(SimplifiedNewsArticle.class));
 
 //        LongAccumulator wordCountAccumulator = spark.sparkContext().longAccumulator();
         //计算所有文件的总字符数
@@ -71,7 +76,7 @@ public class MyFunctions {
                 queryRecord.append(term + "  ");
                 // 分别为，newsArticle，当前文件的长度，当前文件term的数量，这些东西jiang'bei
                 Dataset<Tuple3<String,Integer,Short>> articleCountTuple =
-                        processedArticleDataset.map(new WordCountMap(fileCountAccumulator,termCountInAllDocument,term),
+                        simplifiedNewsArticleDataset.map(new WordCountMap(fileCountAccumulator,termCountInAllDocument,term),
                                 Encoders.tuple(Encoders.STRING(),Encoders.INT(),Encoders.SHORT()));
                 articleCountTuple.count();
 
