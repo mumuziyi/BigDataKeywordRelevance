@@ -53,7 +53,6 @@ public class MyFunctions {
             List<String> terms = query.getQueryTerms();
             // 存放每一次的结果，当这个query结束时合并结果
             Broadcast<List<String>> termsBroadcast = spark.sparkContext().broadcast(terms, scala.reflect.ClassTag$.MODULE$.apply(List.class));
-//            List<List<ArticleDPHScore>> entireQueryDPH = new ArrayList<>();
             List<Dataset<ArticleDPHScore>> entireQueryDPH = new ArrayList<>();
 
             for (String term : termsBroadcast.value()) {
@@ -83,7 +82,6 @@ public class MyFunctions {
                 }
             }
             System.out.println(fileCountAccumulator.value());
-
             }
         }
     }
