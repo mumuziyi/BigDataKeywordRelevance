@@ -1,25 +1,17 @@
 package uk.ac.gla.dcs.bigdata.studentfunctions;
 
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.*;
 import org.apache.spark.util.LongAccumulator;
-import scala.Tuple2;
-import scala.Tuple3;
-import scala.reflect.ClassTag;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
-import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 import uk.ac.gla.dcs.bigdata.studentfunctions.map.*;
 import uk.ac.gla.dcs.bigdata.studentstructures.ArticleCount;
 import uk.ac.gla.dcs.bigdata.studentstructures.ArticleDPHScore;
 import uk.ac.gla.dcs.bigdata.studentstructures.MyDPHMergeStructure;
 
-import javax.xml.crypto.Data;
 import java.util.*;
 
 public class MyFunctions {
@@ -61,16 +53,12 @@ public class MyFunctions {
             List<String> terms = query.getQueryTerms();
             // 存放每一次的结果，当这个query结束时合并结果
             Broadcast<List<String>> termsBroadcast = spark.sparkContext().broadcast(terms, scala.reflect.ClassTag$.MODULE$.apply(List.class));
-            List<List<ArticleDPHScore>> entireQueryDPH = new ArrayList<>();
+//            List<List<ArticleDPHScore>> entireQueryDPH = new ArrayList<>();
+            List<Dataset<ArticleDPHScore>> entireQueryDPH = new ArrayList<>();
 
             for (String term : termsBroadcast.value()) {
-//                ClassTag<String> classTag = scala.reflect.ClassTag$.MODULE$.apply(Query.class);
-//                Broadcast<String> termBroadcast = spark.sparkContext().broadcast(term, classTag);
                 queryRecord.append(term + "  ");
                 // 分别为，newsArticle，当前文件的长度，当前文件term的数量
-//                Dataset<Tuple3<NewsArticle,Integer,Short>> articleCountTuple =
-//                        processedArticleDataset.map(new WordCountMap(fileCountAccumulator,termCountInAllDocument,term),
-//                                Encoders.tuple(Encoders.bean(NewsArticle.class),Encoders.INT(),Encoders.SHORT()));
                 Dataset<ArticleCount> articleCountTuple =
                         processedArticleDataset.map(new WordCountMap(fileCountAccumulator, termCountInAllDocument, term),
                                 Encoders.bean(ArticleCount.class));
@@ -80,23 +68,13 @@ public class MyFunctions {
                 long termCountAll = termCountInAllDocument.value();
 //
                 Dataset<ArticleDPHScore> articlesDPHScores = articleCountTuple.map(
-                        new DPHCalculateMap(fileCountAll,termCountAll, articleCountTuple.count()),
+                        new DPHCalculateMap(fileCountAll, termCountAll, articleCountTuple.count()),
                         Encoders.bean(ArticleDPHScore.class));
 
                 articlesDPHScores.count();
 
+                entireQueryDPH.add(articlesDPHScores);
 
-                // Print the DPH sctore, for each single term
-                List<ArticleDPHScore> tuple2s = articlesDPHScores.collectAsList();
-////
-                entireQueryDPH.add(tuple2s);
-//
-                for (ArticleDPHScore tuple2: tuple2s){
-                    if (tuple2.DPHScore > 0){
-                        System.out.println(term + "  " + tuple2.Article.getTitle() + "   " + tuple2.DPHScore);
-                    }
-                }
-            }
             System.out.println("Finish this query");
             List<MyDPHMergeStructure> mergedList = mergeDPHScoreList(entireQueryDPH);
             for (MyDPHMergeStructure structure: mergedList){
@@ -104,28 +82,27 @@ public class MyFunctions {
                     System.out.println(queryRecord.toString() + ": " + structure.getNews().getTitle() + "   " + structure.getScore());
                 }
             }
-            }
-
             System.out.println(fileCountAccumulator.value());
 
+            }
         }
+    }
 //}
 
-    public List<MyDPHMergeStructure> mergeDPHScoreList(List<List<ArticleDPHScore>> DPHScores){
+    public List<MyDPHMergeStructure> mergeDPHScoreList(List<Dataset<ArticleDPHScore>> DPHScores){
 
         Map<NewsArticle,Double> mergeMap = new HashMap<>();
 
         int length = DPHScores.size();
 
-        for (List<ArticleDPHScore> tupleList: DPHScores){
-            for (ArticleDPHScore tuple: tupleList){
+        for (Dataset<ArticleDPHScore> tupleList: DPHScores){
+            tupleList.foreach(tuple -> {
                 if (tuple.DPHScore > 0 ) {
                     mergeMap.put(tuple.Article,mergeMap.getOrDefault(tuple.Article, 0.0) + tuple.DPHScore);
                 }else {
                     mergeMap.put(tuple.Article,mergeMap.getOrDefault(tuple.Article, 0.0) + 0);
                 }
-
-            }
+            });
         }
 
         List<MyDPHMergeStructure> mergedList = new ArrayList<>();

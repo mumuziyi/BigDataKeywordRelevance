@@ -6,8 +6,12 @@ public class ArticleDPHScore {
     public NewsArticle Article;
     public double DPHScore;
 
-    public ArticleDPHScore(NewsArticle article, double DPHScore) {
+    public ArticleDPHScore(NewsArticle article, double DphScore) {
         Article = article;
-        this.DPHScore = DPHScore;
+        if(Double.isNaN(DphScore)){
+            DPHScore = 0.0;
+        }else{
+            DPHScore = DphScore;
+        }
     }
 }
