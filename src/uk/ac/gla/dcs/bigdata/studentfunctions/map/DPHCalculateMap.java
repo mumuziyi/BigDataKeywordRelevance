@@ -7,6 +7,7 @@ import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 
 public class DPHCalculateMap implements MapFunction<Tuple3<String, Integer, Short>, Tuple2<String, Double>> {
 
+
     long fillCountAll;
     long termCountAll;
     long count;

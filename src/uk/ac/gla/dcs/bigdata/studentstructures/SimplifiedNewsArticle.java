@@ -11,6 +11,9 @@ import java.util.List;
  * This class is used to reduce the amount of data that is sent between the driver and the executors.
  */
 public class SimplifiedNewsArticle implements Serializable {
+
+
+    private static final long serialVersionUID = 3195489395378110063L;
     private String id;
     private List<ContentItem> contents;
     private String originalTitle;
