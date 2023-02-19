@@ -2,12 +2,19 @@ package uk.ac.gla.dcs.bigdata.apps;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
+
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import uk.ac.gla.dcs.bigdata.MyMaps.MyFunctions;
+import uk.ac.gla.dcs.bigdata.MyMaps.NewsToCountMap;
+import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
@@ -98,10 +105,24 @@ public class AssessedExercise {
 		//----------------------------------------------------------------
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
+
+		List<Query> queryList = queries.collectAsList();
+
+		Set<String> terms = MyFunctions.getTermsSet(queryList);
+
+//		Set<String> queriesTerms = queries.reduce();
+
+		// 广播所有的query
+		Broadcast<Set<String>> broadcastTerms = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(terms);
+
+		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms), Encoders.bean(NewsCount.class));
+
+		newsCount.count();
 		
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
-	
+
+
 	
 }
