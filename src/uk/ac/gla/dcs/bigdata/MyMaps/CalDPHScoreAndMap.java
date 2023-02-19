@@ -40,7 +40,7 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
 
         Map<String, Integer> termFreqInCur = value.getTermCountMap();
 
-//        Set<String> keys = termFreqInCur.keySet();
+        Set<String> keys = termFreqInCur.keySet();
 //        for (String key:keys){
 //            System.out.println("+++++" + key+ "  " +termFreqInCur.get(key));
 //            System.out.println(termFreqInCur.containsKey("financ"));
@@ -67,6 +67,7 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
             }
         }
 
-        return null;
+        // NewsDPHScore(NewsArticle newsArticle, Map<Query, Double> queryDoubleMap)
+        return new NewsDPHScore(value.getNewsArticle(),queryDoubleMap);
     }
 }

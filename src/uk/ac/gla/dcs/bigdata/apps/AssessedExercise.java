@@ -135,7 +135,7 @@ public class AssessedExercise {
 		Dataset<NewsDPHScore> rankedResultDataset = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsDPHScore.class));
 
-		rankedResultDataset.count();
+		rankedResultDataset.collectAsList();
 
 //		// 输出测试
 //		List<NewsCount> newsCountList = newsCount.collectAsList();

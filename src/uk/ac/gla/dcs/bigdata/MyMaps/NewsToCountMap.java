@@ -20,10 +20,10 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
     LongAccumulator totalLengthInAll;
     LongAccumulator newsNumberInAll;
 
-    public NewsToCountMap(Broadcast<Set<String>> broadcastQueryList,Map<String, LongAccumulator> accumulatorMap,LongAccumulator totalLength,LongAccumulator newsNumberInAll){
+    public NewsToCountMap(Broadcast<Set<String>> broadcastQueryList,Map<String, LongAccumulator> accumulatorMap,LongAccumulator totalLengthInAll,LongAccumulator newsNumberInAll){
         this.broadcastQueryList = broadcastQueryList;
         this.accumulatorMap = accumulatorMap;
-        this.totalLengthInAll = totalLength;
+        this.totalLengthInAll = totalLengthInAll;
         this.newsNumberInAll = newsNumberInAll;
     }
     @Override
@@ -54,11 +54,12 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
         // 遍历title，如果发现title中当前的单词属于query 的term， 就放进去
         for (String titleTerm: titleList){
             totalLengthInAll.add(1);
+            articleLength ++;
             if (QueriesTerms.contains(titleTerm)){
                 termCountMap.put(titleTerm, termCountMap.getOrDefault(titleTerm,0) + 1);
                 // 在accumulator中加，用来保存每个term在所有文章中出现的次数
                 accumulatorMap.get(titleTerm).add(1);
-                articleLength ++;
+
             }
         }
 
@@ -87,8 +88,8 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
                 if (QueriesTerms.contains(contentToken)){
                     termCountMap.put(contentToken, termCountMap.getOrDefault(contentToken,0) + 1);
                     accumulatorMap.get(contentToken).add(1);
-                    articleLength++;
                 }
+                articleLength++;
             }
 
         }
