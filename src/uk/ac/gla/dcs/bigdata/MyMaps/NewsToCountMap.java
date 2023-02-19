@@ -2,6 +2,7 @@ package uk.ac.gla.dcs.bigdata.MyMaps;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
+import org.apache.spark.util.LongAccumulator;
 import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
@@ -14,12 +15,17 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
     private static final long serialVersionUID = -1912835801896003830L;
     Broadcast<Set<String>> broadcastQueryList;
 
-    public NewsToCountMap(Broadcast<Set<String>> broadcastQueryList){
+    Map<String, LongAccumulator> accumulatorMap;
+
+    public NewsToCountMap(Broadcast<Set<String>> broadcastQueryList,Map<String, LongAccumulator> accumulatorMap){
         this.broadcastQueryList = broadcastQueryList;
+
+        this.accumulatorMap = accumulatorMap;
     }
     @Override
     public NewsCount call(NewsArticle value) throws Exception {
 
+        // 如果title为空，不计入
         if (value.getTitle() == null){
             return new NewsCount(value,new HashMap<>());
         }
@@ -42,6 +48,8 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
         for (String titleTerm: titleList){
             if (QueriesTerms.contains(titleTerm)){
                 termCountMap.put(titleTerm, termCountMap.getOrDefault(titleTerm,0) + 1);
+                // 在accumulator中加，用来保存每个term在所有文章中出现的次数
+                accumulatorMap.get(titleTerm).add(1);
             }
         }
 
@@ -49,14 +57,14 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
         List<ContentItem> contentItems = value.getContents();
         // 记录当前段落
         int curPara = 0;
-        // 对于
+        // 遍历newsArticle的所有contentItem
         for (ContentItem contentItem: contentItems){
-            // 如果当前的subtype不是段落，则去下一段
-            if (contentItem.getSubtype() == null || contentItem.getSubtype().equals("paragraph")){
+            // 如果当前的subtype不是段落，则取下一个contentItem
+            if (contentItem.getSubtype() == null || !contentItem.getSubtype().equals("paragraph")){
                 continue;
             }
             curPara +=1;
-            // 只要前五段，否则退出循环
+            // 只要前五段，段数大于五段break返回
             if (curPara > 5){
                 break;
             }
@@ -67,7 +75,11 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
             // 处理当前的content
             for (String contentToken: contentTokens){
                 if (QueriesTerms.contains(contentToken)){
+                    if (contentToken.equals("financ")){
+                        System.out.println("=======================");
+                    }
                     termCountMap.put(contentToken, termCountMap.getOrDefault(contentToken,0) + 1);
+                    accumulatorMap.get(contentToken).add(1);
                 }
             }
 
