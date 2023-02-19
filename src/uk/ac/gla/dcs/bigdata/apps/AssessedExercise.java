@@ -1,7 +1,9 @@
 package uk.ac.gla.dcs.bigdata.apps;
 
 import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -11,17 +13,14 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import org.apache.spark.util.LongAccumulator;
-import uk.ac.gla.dcs.bigdata.studentfunctions.*;
-import uk.ac.gla.dcs.bigdata.studentstructures.NewsCount;
-import uk.ac.gla.dcs.bigdata.studentstructures.NewsDPHScore;
-import uk.ac.gla.dcs.bigdata.studentstructures.QueryNewsListStructure;
+import uk.ac.gla.dcs.bigdata.MyMaps.MyFunctions;
+import uk.ac.gla.dcs.bigdata.MyMaps.NewsToCountMap;
+import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -66,8 +65,7 @@ public class AssessedExercise {
 		// Get the location of the input news articles
 		String newsFile = System.getenv("bigdata.news");
 		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
-//		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
-
+		
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
 		
@@ -109,72 +107,34 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 
-		// get all queries
 		List<Query> queryList = queries.collectAsList();
 
-		// get all query terms and combine them as a set
 		Set<String> terms = MyFunctions.getTermsSet(queryList);
-		// This map can calculate each terms frequency in all news
-		Map<String, LongAccumulator> accumulatorMap = MyFunctions.getAccumulator(terms,spark);
 
-		// Use accumulator to calculate totalLength of the doc and total number of the News
-		LongAccumulator totalLengthInAll = spark.sparkContext().longAccumulator();
-		LongAccumulator newsNumbInAll = spark.sparkContext().longAccumulator();
+//		Set<String> queriesTerms = queries.reduce();
 
-		Broadcast<List<Query>> broadcastQuery = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryList);
+		// 广播所有的query
 		Broadcast<Set<String>> broadcastTerms = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(terms);
 
-		// Convert to NewsCount Type, reduce the content size of the news
-		// At the same time, get total count for every accumulator
-		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms,accumulatorMap,totalLengthInAll,newsNumbInAll),
-				Encoders.bean(NewsCount.class));
+		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms), Encoders.bean(NewsCount.class));
 
-		// Action, make sure accumulator count correct
-		newsCount.collectAsList();
+		List<NewsCount> newsCountList = newsCount.collectAsList();
 
-		// get number form accumulator
-		Map<String,Long> accumulatorMapLong = new HashMap<>();
-		for (String string: accumulatorMap.keySet()){
-			accumulatorMapLong.put(string,accumulatorMap.get(string).value());
+		for (NewsCount newsCount1: newsCountList){
+			Map<String,Integer> count = newsCount1.getTermCountMap();
+			if (newsCount1.getTermCountMap().keySet().size() == 0){
+				continue;
+			}
+			System.out.println(newsCount1.getNewsArticle().getTitle());
+			Set<String> keys = count.keySet();
+			for (String key: keys){
+				System.out.print(key+count.get(key) + "  ");
+			}
+			System.out.println();
 		}
-
-
-		// calculate DPHScore
-		// get <News,List of DPHScore> pair
-		Dataset<NewsDPHScore> NewsDphScore = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,
-						accumulatorMapLong,totalLengthInAll.value(),newsNumbInAll.value()),
-				Encoders.bean(NewsDPHScore.class));
-
-		// map to Another  type which can be used in reduce process and get required result
-		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),
-				Encoders.bean(QueryNewsListStructure.class));
-
-		// get the  <query, ListOfNews> pairs.
-		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReducer());
-
-		Map<String, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
-		List<DocumentRanking> documentRankings = new ArrayList<>();
-
-		// Process the <query, ListOfNews> pairs.
-		for (String query: finalAnswerMap.keySet()){
-
-			List<RankedResult> rankedResults = finalAnswerMap.get(query);
-
-			// Sort result, we want Top 10
-			Collections.sort(rankedResults);
-			Collections.reverse(rankedResults);
-
-			// Get Top10 by DPH score and delete some news by title distance
-			rankedResults = MyFunctions.getTop10(rankedResults);
-
-			Query certainQuery = queryList.stream().filter(q -> q.getOriginalQuery().equals(query)).findFirst().get();
-
-			documentRankings.add(new DocumentRanking(certainQuery, rankedResults));
-
-		}
-
-		return documentRankings; // replace this with the the list of DocumentRanking output by your topology
-//		return null;
+		
+		
+		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
 
 
