@@ -13,6 +13,7 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import org.apache.spark.util.LongAccumulator;
 import uk.ac.gla.dcs.bigdata.MyMaps.MyFunctions;
 import uk.ac.gla.dcs.bigdata.MyMaps.NewsToCountMap;
 import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
@@ -21,6 +22,8 @@ import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+
+import static uk.ac.gla.dcs.bigdata.MyMaps.MyFunctions.getAccumulator;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -110,14 +113,17 @@ public class AssessedExercise {
 		List<Query> queryList = queries.collectAsList();
 
 		Set<String> terms = MyFunctions.getTermsSet(queryList);
+		Map<String, LongAccumulator> accumulatorMap = MyFunctions.getAccumulator(terms,spark);
 
 //		Set<String> queriesTerms = queries.reduce();
 
 		// 广播所有的query
 		Broadcast<Set<String>> broadcastTerms = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(terms);
 
-		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms), Encoders.bean(NewsCount.class));
+		// 对newsarticle进行map
+		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms,accumulatorMap), Encoders.bean(NewsCount.class));
 
+		// 输出测试
 		List<NewsCount> newsCountList = newsCount.collectAsList();
 
 		for (NewsCount newsCount1: newsCountList){
@@ -131,6 +137,11 @@ public class AssessedExercise {
 				System.out.print(key+count.get(key) + "  ");
 			}
 			System.out.println();
+		}
+
+		Set<String> accumulatorSet = accumulatorMap.keySet();
+		for (String key: accumulatorSet){
+			System.out.println(key + "  " + accumulatorMap.get(key));
 		}
 		
 		
