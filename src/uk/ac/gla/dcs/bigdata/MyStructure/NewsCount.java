@@ -16,10 +16,21 @@ public class NewsCount implements Serializable {
 
     Map<String,Integer> termCountMap;
 
-    public NewsCount(NewsArticle newsArticle, Map<String,Integer> termCountMap){
+    int totalLength;
+
+    public NewsCount(NewsArticle newsArticle, Map<String,Integer> termCountMap, int totalLength){
         super();
         this.newsArticle = newsArticle;
         this.termCountMap = termCountMap;
+        this.totalLength = totalLength;
+    }
+
+    public int getTotalLength() {
+        return totalLength;
+    }
+
+    public void setTotalLength(int totalLength) {
+        this.totalLength = totalLength;
     }
 
     public NewsCount() {
