@@ -14,12 +14,15 @@ public class NewsCount implements Serializable {
 
     NewsArticle newsArticle;
 
-    Map<String,Integer> termCountMap = new HashMap<>();
+    Map<String,Integer> termCountMap;
 
     public NewsCount(NewsArticle newsArticle, Map<String,Integer> termCountMap){
         super();
         this.newsArticle = newsArticle;
         this.termCountMap = termCountMap;
+    }
+
+    public NewsCount() {
     }
 
     public NewsArticle getNewsArticle() {

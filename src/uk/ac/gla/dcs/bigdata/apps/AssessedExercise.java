@@ -2,6 +2,7 @@ package uk.ac.gla.dcs.bigdata.apps;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.spark.SparkConf;
@@ -117,7 +118,20 @@ public class AssessedExercise {
 
 		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms), Encoders.bean(NewsCount.class));
 
-		newsCount.count();
+		List<NewsCount> newsCountList = newsCount.collectAsList();
+
+		for (NewsCount newsCount1: newsCountList){
+			Map<String,Integer> count = newsCount1.getTermCountMap();
+			if (newsCount1.getTermCountMap().keySet().size() == 0){
+				continue;
+			}
+			System.out.println(newsCount1.getNewsArticle().getTitle());
+			Set<String> keys = count.keySet();
+			for (String key: keys){
+				System.out.print(key+count.get(key) + "  ");
+			}
+			System.out.println();
+		}
 		
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
