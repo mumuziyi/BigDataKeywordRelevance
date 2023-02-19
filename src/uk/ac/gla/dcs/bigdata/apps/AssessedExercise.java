@@ -14,14 +14,17 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import org.apache.spark.util.LongAccumulator;
+import uk.ac.gla.dcs.bigdata.MyMaps.CalDPHScoreAndMap;
 import uk.ac.gla.dcs.bigdata.MyMaps.MyFunctions;
 import uk.ac.gla.dcs.bigdata.MyMaps.NewsToCountMap;
 import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
+import uk.ac.gla.dcs.bigdata.MyStructure.NewsDPHScore;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 
 import static uk.ac.gla.dcs.bigdata.MyMaps.MyFunctions.getAccumulator;
 
@@ -115,35 +118,49 @@ public class AssessedExercise {
 		Set<String> terms = MyFunctions.getTermsSet(queryList);
 		Map<String, LongAccumulator> accumulatorMap = MyFunctions.getAccumulator(terms,spark);
 
-//		Set<String> queriesTerms = queries.reduce();
+		LongAccumulator totalLengthInAll = spark.sparkContext().longAccumulator();
+		LongAccumulator newsNumbInAll = spark.sparkContext().longAccumulator();
 
-		// 广播所有的query
+		Broadcast<List<Query>> broadcastQuery = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryList);
+		// 广播所有的query terms用于计数
 		Broadcast<Set<String>> broadcastTerms = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(terms);
 
 		// 对newsarticle进行map
-		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms,accumulatorMap), Encoders.bean(NewsCount.class));
+		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms,accumulatorMap,totalLengthInAll,newsNumbInAll),
+				Encoders.bean(NewsCount.class));
 
-		// 输出测试
-		List<NewsCount> newsCountList = newsCount.collectAsList();
+		newsCount.collectAsList();
 
-		for (NewsCount newsCount1: newsCountList){
-			Map<String,Integer> count = newsCount1.getTermCountMap();
-			if (newsCount1.getTermCountMap().keySet().size() == 0){
-				continue;
-			}
-			System.out.println(newsCount1.getNewsArticle().getTitle());
-			Set<String> keys = count.keySet();
-			for (String key: keys){
-				System.out.print(key+count.get(key) + "  ");
-			}
-			System.out.println();
-		}
+//		 得到了所有需要的东西，计算DPH值并且进行map
+		Dataset<NewsDPHScore> rankedResultDataset = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,accumulatorMap,totalLengthInAll,newsNumbInAll),
+				Encoders.bean(NewsDPHScore.class));
 
-		Set<String> accumulatorSet = accumulatorMap.keySet();
-		for (String key: accumulatorSet){
-			System.out.println(key + "  " + accumulatorMap.get(key));
-		}
-		
+		rankedResultDataset.count();
+
+//		// 输出测试
+//		List<NewsCount> newsCountList = newsCount.collectAsList();
+//		System.out.println(totalLengthInAll);
+//		System.out.println(newsNumbInAll);
+//		System.out.println(totalLength);
+//
+//		for (NewsCount newsCount1: newsCountList){
+//			Map<String,Integer> count = newsCount1.getTermCountMap();
+//			if (newsCount1.getTermCountMap().keySet().size() == 0){
+//				continue;
+//			}
+//			System.out.println(newsCount1.getNewsArticle().getTitle());
+//			Set<String> keys = count.keySet();
+//			for (String key: keys){
+//				System.out.print(key+count.get(key) + "  ");
+//			}
+//			System.out.println();
+//		}
+//
+//		Set<String> accumulatorSet = accumulatorMap.keySet();
+//		for (String key: accumulatorSet){
+//			System.out.println(key + "  " + accumulatorMap.get(key));
+//		}
+//
 		
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}

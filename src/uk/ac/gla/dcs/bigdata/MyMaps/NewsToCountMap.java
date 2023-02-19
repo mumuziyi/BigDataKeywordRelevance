@@ -17,19 +17,26 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
 
     Map<String, LongAccumulator> accumulatorMap;
 
-    public NewsToCountMap(Broadcast<Set<String>> broadcastQueryList,Map<String, LongAccumulator> accumulatorMap){
-        this.broadcastQueryList = broadcastQueryList;
+    LongAccumulator totalLengthInAll;
+    LongAccumulator newsNumberInAll;
 
+    public NewsToCountMap(Broadcast<Set<String>> broadcastQueryList,Map<String, LongAccumulator> accumulatorMap,LongAccumulator totalLength,LongAccumulator newsNumberInAll){
+        this.broadcastQueryList = broadcastQueryList;
         this.accumulatorMap = accumulatorMap;
+        this.totalLengthInAll = totalLength;
+        this.newsNumberInAll = newsNumberInAll;
     }
     @Override
     public NewsCount call(NewsArticle value) throws Exception {
 
+        int articleLength = 0;
+
         // 如果title为空，不计入
         if (value.getTitle() == null){
-            return new NewsCount(value,new HashMap<>());
+            return new NewsCount(value,new HashMap<>(),0);
         }
 
+        newsNumberInAll.add(1);
         // 所有terms的集合
         Set<String> QueriesTerms = broadcastQueryList.value();
 
@@ -46,10 +53,12 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
         // 处理title的所含的term
         // 遍历title，如果发现title中当前的单词属于query 的term， 就放进去
         for (String titleTerm: titleList){
+            totalLengthInAll.add(1);
             if (QueriesTerms.contains(titleTerm)){
                 termCountMap.put(titleTerm, termCountMap.getOrDefault(titleTerm,0) + 1);
                 // 在accumulator中加，用来保存每个term在所有文章中出现的次数
                 accumulatorMap.get(titleTerm).add(1);
+                articleLength ++;
             }
         }
 
@@ -74,18 +83,16 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
 
             // 处理当前的content
             for (String contentToken: contentTokens){
+                totalLengthInAll.add(1);
                 if (QueriesTerms.contains(contentToken)){
-                    if (contentToken.equals("financ")){
-                        System.out.println("=======================");
-                    }
                     termCountMap.put(contentToken, termCountMap.getOrDefault(contentToken,0) + 1);
                     accumulatorMap.get(contentToken).add(1);
+                    articleLength++;
                 }
             }
 
         }
         // 处理完这篇文章
-
-        return new NewsCount(value,termCountMap);
+        return new NewsCount(value,termCountMap,articleLength);
     }
 }
