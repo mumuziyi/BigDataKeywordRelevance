@@ -1,10 +1,7 @@
 package uk.ac.gla.dcs.bigdata.apps;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -125,67 +122,68 @@ public class AssessedExercise {
 		// 广播所有的query terms用于计数
 		Broadcast<Set<String>> broadcastTerms = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(terms);
 
-		// 对newsarticle进行map
+		// 对newsarticle进行map，得到所需的计数
 		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsCount.class));
-
-		newsCount.collectAsList();
 
 //		 得到了所有需要的东西，计算DPH值并且进行map
 		Dataset<NewsDPHScore> NewsDphScore = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsDPHScore.class));
 
-		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),Encoders.bean(QueryNewsListStructure.class));
+//		List<NewsDPHScore> testList = NewsDphScore.collectAsList();
 
-		queryNewsListStructureDataset.collectAsList();
+//		for (NewsDPHScore score: testList){
+//			if (score.getNewsArticle().getTitle()!= null && score.getNewsArticle().getTitle().equals("How D.C. interests sidestep campaign finance limits")){
+//				Map<Query, Double> queryDoubleMap = score.getQueryDoubleMap();
+//				int i = 0;
+//				for (Query query1: queryDoubleMap.keySet()){
+//					System.out.println(i + "   " + query1.getOriginalQuery() + "   " + queryDoubleMap.get(query1));
+//					i++;
+//				}
+//			}
+//		}
 
-		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReduce());
+		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),
+				Encoders.bean(QueryNewsListStructure.class));
 
-		Map<Query, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
+		List<QueryNewsListStructure> queryNewsListStructures = queryNewsListStructureDataset.collectAsList();
 
-		for (Query query: finalAnswerMap.keySet()){
-			System.out.println("Current query is " + query.getOriginalQuery());
-			List<RankedResult> rankedResults = finalAnswerMap.get(query);
-			Collections.sort(rankedResults);
-			Collections.reverse(rankedResults);
-			for (RankedResult rankedResult: rankedResults){
-				if (rankedResult.getScore() > 0){
-					System.out.println(rankedResult.getArticle().getTitle() + "   " + rankedResult.getScore());
+		int count = 0;
+		for (QueryNewsListStructure queryNewsListStructure: queryNewsListStructures){
+			Set<Query> set = queryNewsListStructure.getQueryListMap().keySet();
+			for (Query query: set){
+				List<RankedResult> rankedResults = queryNewsListStructure.getQueryListMap().get(query);
+				for (RankedResult rankedResult: rankedResults){
+					count++;
+					if (rankedResult.getScore() > 0){
+						System.out.println(query.getOriginalQuery() + "  " +rankedResult.getArticle().getTitle() +"   " +rankedResult.getScore());
+
+					}
 				}
 			}
-			System.out.println();
-
 		}
 
-//		queryNewsListStructureDataset.collectAsList();
 
 
-
-//		// 输出测试
-//		List<NewsCount> newsCountList = newsCount.collectAsList();
-//		System.out.println(totalLengthInAll);
-//		System.out.println(newsNumbInAll);
-//		System.out.println(totalLength);
 //
-//		for (NewsCount newsCount1: newsCountList){
-//			Map<String,Integer> count = newsCount1.getTermCountMap();
-//			if (newsCount1.getTermCountMap().keySet().size() == 0){
-//				continue;
-//			}
-//			System.out.println(newsCount1.getNewsArticle().getTitle());
-//			Set<String> keys = count.keySet();
-//			for (String key: keys){
-//				System.out.print(key+count.get(key) + "  ");
+		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReduce());
+//
+		Map<Query, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
+//
+//		for (Query query: finalAnswerMap.keySet()){
+//			System.out.println("Current query is " + query.getOriginalQuery());
+//			List<RankedResult> rankedResults = finalAnswerMap.get(query);
+//			Collections.sort(rankedResults);
+//			Collections.reverse(rankedResults);
+//			for (RankedResult rankedResult: rankedResults){
+//				if (rankedResult.getScore() > 0){
+//					System.out.println(rankedResult.getArticle().getTitle() + "   " + rankedResult.getScore());
+//				}
 //			}
 //			System.out.println();
-//		}
 //
-//		Set<String> accumulatorSet = accumulatorMap.keySet();
-//		for (String key: accumulatorSet){
-//			System.out.println(key + "  " + accumulatorMap.get(key));
 //		}
-//
-		
+
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
 
