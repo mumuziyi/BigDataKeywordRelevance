@@ -40,39 +40,26 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
         Map<Query, Double> queryDoubleMap = new HashMap<>();
 //        Retrieve the query list from the broadcast variable.
         List<Query> queries = broadcastQuery.value();
-
+//        TermCountMap that tracks the count of each query's term in the news article.
         Map<String, Integer> termFreqInCur = value.getTermCountMap();
-
-        Set<String> keys = termFreqInCur.keySet();
 
         for (Query query : queries) {
             double score = 0.0;
             List<String> terms = query.getQueryTerms();
             for (String term : terms) {
-                long temp2 = accumulatorMap.get(term).value();
+//                Get the occurrence of THE TERM in ALL articles.
+                long termOccurrence = accumulatorMap.get(term).value();
                 if (!termFreqInCur.containsKey(term) || value.getTotalLength() == 0) {
                     continue;
                 }
                 int temp1 = termFreqInCur.get(term);
 
-                score += DPHScorer.getDPHScore((short) temp1, (int) temp2, value.getTotalLength(), totalLengthInAll.value() / newsNumberInAll.value(), newsNumberInAll.value());
+                score += DPHScorer.getDPHScore((short) temp1, (int) termOccurrence, value.getTotalLength(), totalLengthInAll.value() / newsNumberInAll.value(), newsNumberInAll.value());
             }
             queryDoubleMap.put(query, score / query.getQueryTerms().size());
 
-//            if (value.getNewsArticle().getTitle()!= null && value.getNewsArticle().getTitle().equals("How D.C. interests sidestep campaign finance limits")){
-//                int i = 0;
-//                for (Query query1: queryDoubleMap.keySet()){
-//                    System.out.println(i + "   " + query1.getOriginalQuery() + "   " + queryDoubleMap.get(query1));
-//                    i++;
-//                }
-//            }
-
-//            if (score/query.getQueryTerms().size()!= 0){
-//                System.out.println(query.getOriginalQuery()+ "  " +value.getNewsArticle().getTitle() + "  "  + score/query.getQueryTerms().size());
-//            }
         }
 
-        // NewsDPHScore(NewsArticle newsArticle, Map<Query, Double> queryDoubleMap)
         return new NewsDPHScore(value.getNewsArticle(), queryDoubleMap);
     }
 }
