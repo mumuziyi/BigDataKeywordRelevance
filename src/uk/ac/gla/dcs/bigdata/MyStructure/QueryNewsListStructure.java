@@ -12,20 +12,20 @@ public class QueryNewsListStructure implements Serializable {
 
     private static final long serialVersionUID = 125686797741279609L;
 
-    Map<Query,List<RankedResult>> queryListMap;
+    Map<String,List<RankedResult>> queryListMap;
 
-    public QueryNewsListStructure(Map<Query, List<RankedResult>> queryListMap) {
+    public QueryNewsListStructure(Map<String, List<RankedResult>> queryListMap) {
         this.queryListMap = queryListMap;
     }
 
     public QueryNewsListStructure() {
     }
 
-    public Map<Query, List<RankedResult>> getQueryListMap() {
+    public Map<String, List<RankedResult>> getQueryListMap() {
         return queryListMap;
     }
 
-    public void setQueryListMap(Map<Query, List<RankedResult>> queryListMap) {
+    public void setQueryListMap(Map<String, List<RankedResult>> queryListMap) {
         this.queryListMap = queryListMap;
     }
 }
