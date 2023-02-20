@@ -55,10 +55,6 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
         String title = value.getTitle();
         List<String> titleList = processor.process(title);
 
-        // 要返回的map，其中包括此文章所含的query term以及相应的个数
-        Map<String,Integer> termCountMap = new HashMap<>();
-
-
         // 处理title的所含的term
         // 遍历title，如果发现title中当前的单词属于query 的term， 就放进去
         for (String titleTerm: titleList){
