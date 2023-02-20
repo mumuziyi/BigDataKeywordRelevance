@@ -2,15 +2,12 @@ package uk.ac.gla.dcs.bigdata.MyMaps;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.sql.sources.In;
 import org.apache.spark.util.LongAccumulator;
 import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
 import uk.ac.gla.dcs.bigdata.MyStructure.NewsDPHScore;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 
-import java.security.Key;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +21,13 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
     LongAccumulator newsNumberInAll;
 
 
-    public CalDPHScoreAndMap(Broadcast<List<Query>> broadcastQuery, Map<String, LongAccumulator> accumulatorMap, LongAccumulator totalLength,LongAccumulator newsNumberInAll) {
+    /**
+     * @param broadcastQuery A list of Query objects that are broadcast to all nodes.
+     * @param accumulatorMap A map that keeps track of each query term's appearances in ALL articles.
+     * @param totalLength A fixed global length of all the articles.
+     * @param newsNumberInAll A fixed global number of all articles.
+     */
+    public CalDPHScoreAndMap(Broadcast<List<Query>> broadcastQuery, Map<String, LongAccumulator> accumulatorMap, LongAccumulator totalLength, LongAccumulator newsNumberInAll) {
         this.broadcastQuery = broadcastQuery;
         this.accumulatorMap = accumulatorMap;
         this.totalLengthInAll = totalLength;
@@ -34,34 +37,27 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
     @Override
     public NewsDPHScore call(NewsCount value) throws Exception {
 
-        Map<Query,Double> queryDoubleMap = new HashMap<>();
-
+        Map<Query, Double> queryDoubleMap = new HashMap<>();
+//        Retrieve the query list from the broadcast variable.
         List<Query> queries = broadcastQuery.value();
 
         Map<String, Integer> termFreqInCur = value.getTermCountMap();
 
         Set<String> keys = termFreqInCur.keySet();
 
-//        for (String key:keys){
-//            System.out.println("+++++" + key+ "  " +termFreqInCur.get(key));
-//            System.out.println(termFreqInCur.containsKey("financ"));
-//        }
-
-        for (Query query: queries){
+        for (Query query : queries) {
             double score = 0.0;
             List<String> terms = query.getQueryTerms();
-            for (String term: terms){
+            for (String term : terms) {
                 long temp2 = accumulatorMap.get(term).value();
-                if (!termFreqInCur.containsKey(term) || value.getTotalLength() == 0){
+                if (!termFreqInCur.containsKey(term) || value.getTotalLength() == 0) {
                     continue;
                 }
                 int temp1 = termFreqInCur.get(term);
 
-                score += DPHScorer.getDPHScore((short) temp1,(int) temp2,
-                        value.getTotalLength(),totalLengthInAll.value()/newsNumberInAll.value(),
-                        newsNumberInAll.value());
+                score += DPHScorer.getDPHScore((short) temp1, (int) temp2, value.getTotalLength(), totalLengthInAll.value() / newsNumberInAll.value(), newsNumberInAll.value());
             }
-            queryDoubleMap.put(query,score/query.getQueryTerms().size());
+            queryDoubleMap.put(query, score / query.getQueryTerms().size());
 
 //            if (value.getNewsArticle().getTitle()!= null && value.getNewsArticle().getTitle().equals("How D.C. interests sidestep campaign finance limits")){
 //                int i = 0;
@@ -77,6 +73,6 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
         }
 
         // NewsDPHScore(NewsArticle newsArticle, Map<Query, Double> queryDoubleMap)
-        return new NewsDPHScore(value.getNewsArticle(),queryDoubleMap);
+        return new NewsDPHScore(value.getNewsArticle(), queryDoubleMap);
     }
 }
