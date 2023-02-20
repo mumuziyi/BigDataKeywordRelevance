@@ -54,7 +54,8 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
                 }
                 int temp1 = termFreqInCur.get(term);
 
-                score += DPHScorer.getDPHScore((short) temp1, (int) termOccurrence, value.getTotalLength(), totalLengthInAll.value() / newsNumberInAll.value(), newsNumberInAll.value());
+                score += DPHScorer.getDPHScore((short) temp1, (int) termOccurrence, value.getTotalLength(),
+                        totalLengthInAll.value() / newsNumberInAll.value(), newsNumberInAll.value());
             }
             queryDoubleMap.put(query, score / query.getQueryTerms().size());
 
