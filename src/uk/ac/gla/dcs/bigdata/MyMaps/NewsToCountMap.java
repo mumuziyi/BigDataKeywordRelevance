@@ -62,49 +62,41 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
         // First handle the title's terms
         TextPreProcessor processor = new TextPreProcessor();
         String title = value.getTitle();
-        List<String> titleList = processor.process(title);
+        List<String> titleTerms = processor.process(title);
 
 
-
-
-        // 处理title的所含的term
-        // 遍历title，如果发现title中当前的单词属于query 的term， 就放进去
-        for (String titleTerm : titleList) {
+        for (String titleTerm : titleTerms) {
 //            Each time an article's processed, the global article length accumulator is incremented by 1.
 //            By the time all articles are processed, the global article length accumulator will have the total length of all articles.
             globalArticleLength.add(1);
             articleLength++;
+//            If the current term is a query term, then we increment the term's appearance in the article by 1.
             if (QueriesTerms.contains(titleTerm)) {
                 termCountMap.put(titleTerm, termCountMap.getOrDefault(titleTerm, 0) + 1);
                 accumulatorMap.get(titleTerm).add(1);
             }
         }
 
-        // 处理正文
+//        Get all the contentItems from the article.
         List<ContentItem> contentItems = value.getContents();
-        // 记录当前段落
+//        A counter to keep track of the number of paragraphs we have processed.
+//        We only want to process the first 5 paragraphs.
         int curPara = 0;
-        // 遍历newsArticle的所有contentItem
         for (ContentItem contentItem : contentItems) {
-            // 如果当前的subtype不是段落，则取下一个contentItem
+//            Need to consider the case that the contentItem is null or the contentItem doesn't have a subtype.
             if (contentItem == null) continue;
-//                throw new NullPointerException("contentItem is null");
-            if (contentItem.getSubtype() == null || !contentItem.getSubtype().equals("paragraph")) {
-                continue;
-            }
+            if (contentItem.getSubtype() == null || !contentItem.getSubtype().equals("paragraph")) continue;
             curPara += 1;
-            // 只要前五段，段数大于五段break返回
-            if (curPara > 5) {
-                break;
-            }
+//            If the current paragraph is the 6th paragraph, then we break the loop, because we have needed 5 paragraphs.
+            if (curPara > 5) break;
+//            Get the content of the current paragraph and process it to remove stop words and stem the words.
+            List<String> contentTokens = processor.process(contentItem.getContent());
 
-            String content = contentItem.getContent();
-            List<String> contentTokens = processor.process(content);
-
-            // 处理当前的content
             for (String contentToken : contentTokens) {
+//                Every time a word is processed, the global article length accumulator is incremented by 1.
                 globalArticleLength.add(1);
                 if (QueriesTerms.contains(contentToken)) {
+//                    When a query term is found, we increment the term's appearance in the article by 1
                     termCountMap.put(contentToken, termCountMap.getOrDefault(contentToken, 0) + 1);
                     accumulatorMap.get(contentToken).add(1);
                 }
@@ -112,7 +104,7 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
             }
 
         }
-        // 处理完这篇文章
+//        Once everything in the article is processed, return a NewsCount Object.
         return new NewsCount(value, termCountMap, articleLength);
     }
 }

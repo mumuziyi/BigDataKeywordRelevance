@@ -119,26 +119,24 @@ public class AssessedExercise {
 		LongAccumulator newsNumbInAll = spark.sparkContext().longAccumulator();
 
 		Broadcast<List<Query>> broadcastQuery = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryList);
-		// 广播所有的query terms用于计数
 		Broadcast<Set<String>> broadcastTerms = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(terms);
 
-		// 对newsarticle进行map，得到所需的计数
 		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsCount.class));
 
-//		 得到了所有需要的东西，计算DPH值并且进行map
 		Dataset<NewsDPHScore> NewsDphScore = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsDPHScore.class));
 
 		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),
 				Encoders.bean(QueryNewsListStructure.class));
-//
+
 		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReduce());
-//
+
 		Map<String, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
 
 		System.out.println("----------------");
 		System.out.println(finalAnswerMap.keySet().size());
+		List<DocumentRanking> documentRankings = new ArrayList<>();
 		for (String query: finalAnswerMap.keySet()){
 			System.out.println("Current query is " + query);
 			List<RankedResult> rankedResults = finalAnswerMap.get(query);
@@ -149,11 +147,13 @@ public class AssessedExercise {
 					System.out.println(rankedResult.getArticle().getTitle() + "   " + rankedResult.getScore());
 				}
 			}
-			System.out.println();
+			Query certainQuery = queryList.stream().filter(q -> q.getOriginalQuery().equals(query)).findFirst().get();
+
+			documentRankings.add(new DocumentRanking(certainQuery, rankedResults));
 
 		}
 
-		return null; // replace this with the the list of DocumentRanking output by your topology
+		return documentRankings; // replace this with the the list of DocumentRanking output by your topology
 	}
 
 
