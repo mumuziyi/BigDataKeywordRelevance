@@ -8,10 +8,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This converts a NewsArticle into a {@link NewsCount} Object.
@@ -23,36 +20,28 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
 
     Map<String, LongAccumulator> accumulatorMap;
 
-    LongAccumulator globalArticleLength;
-    LongAccumulator globalArticleNumber;
+    LongAccumulator totalLengthInAll;
+    LongAccumulator newsNumberInAll;
 
-    /**
-     * @param queryTermSet        Set of query terms that are broadcast to all nodes.
-     * @param accumulatorMap      A map that keeps track of each query term's appearances in ALL articles.
-     * @param globalArticleLength A global accumulator that keeps track of the total length of all the articles. i.e. Sum of number of words in each article.
-     * @param globalArticleNumber A global accumulator that keeps track of the total number of articles.
-     */
-    public NewsToCountMap(Broadcast<Set<String>> queryTermSet, Map<String, LongAccumulator> accumulatorMap, LongAccumulator globalArticleLength, LongAccumulator globalArticleNumber) {
-        this.broadcastQueryList = queryTermSet;
+    public NewsToCountMap(Broadcast<Set<String>> broadcastQueryList,Map<String, LongAccumulator> accumulatorMap,LongAccumulator totalLengthInAll,LongAccumulator newsNumberInAll){
+        this.broadcastQueryList = broadcastQueryList;
         this.accumulatorMap = accumulatorMap;
-        this.globalArticleLength = globalArticleLength;
-        this.globalArticleNumber = globalArticleNumber;
+        this.totalLengthInAll = totalLengthInAll;
+        this.newsNumberInAll = newsNumberInAll;
     }
 
     @Override
     public NewsCount call(NewsArticle value) throws Exception {
-//        The total length of an article, containing the length of TITLE and length of CONTENT.
+
         int articleLength = 0;
 
-//        Considering an article might have an empty title,
-//        in that case, we just return a NewsCount object with a null title and an empty map,
-//        and the total length is 0.
-        if (value.getTitle() == null) {
-            return new NewsCount(value, new HashMap<>(), 0);
+        // 如果title为空，不计入
+        if (value.getTitle() == null){
+            return new NewsCount(value,new HashMap<>(),0);
         }
 
-        globalArticleNumber.add(1);
-//        Retrieving the query term set from the broadcast variable.
+        newsNumberInAll.add(1);
+        // 所有terms的集合
         Set<String> QueriesTerms = broadcastQueryList.value();
 
 //        A map keeps track of each query term's appearances in the article.
@@ -61,50 +50,62 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
 
         // First handle the title's terms
         TextPreProcessor processor = new TextPreProcessor();
+
+        // 处理文章标题terms
         String title = value.getTitle();
-        List<String> titleTerms = processor.process(title);
+        List<String> titleList = processor.process(title);
+
+        // 要返回的map，其中包括此文章所含的query term以及相应的个数
+        Map<String,Integer> termCountMap = new HashMap<>();
 
 
-        for (String titleTerm : titleTerms) {
-//            Each time an article's processed, the global article length accumulator is incremented by 1.
-//            By the time all articles are processed, the global article length accumulator will have the total length of all articles.
-            globalArticleLength.add(1);
-            articleLength++;
-//            If the current term is a query term, then we increment the term's appearance in the article by 1.
-            if (QueriesTerms.contains(titleTerm)) {
-                termCountMap.put(titleTerm, termCountMap.getOrDefault(titleTerm, 0) + 1);
+        // 处理title的所含的term
+        // 遍历title，如果发现title中当前的单词属于query 的term， 就放进去
+        for (String titleTerm: titleList){
+            totalLengthInAll.add(1);
+            articleLength ++;
+            if (QueriesTerms.contains(titleTerm)){
+                termCountMap.put(titleTerm, termCountMap.getOrDefault(titleTerm,0) + 1);
+                // 在accumulator中加，用来保存每个term在所有文章中出现的次数
                 accumulatorMap.get(titleTerm).add(1);
+
             }
         }
 
-//        Get all the contentItems from the article.
+        // 处理正文
         List<ContentItem> contentItems = value.getContents();
-//        A counter to keep track of the number of paragraphs we have processed.
-//        We only want to process the first 5 paragraphs.
+        // 记录当前段落
         int curPara = 0;
-        for (ContentItem contentItem : contentItems) {
-//            Need to consider the case that the contentItem is null or the contentItem doesn't have a subtype.
-            if (contentItem == null) continue;
-            if (contentItem.getSubtype() == null || !contentItem.getSubtype().equals("paragraph")) continue;
-            curPara += 1;
-//            If the current paragraph is the 6th paragraph, then we break the loop, because we have needed 5 paragraphs.
-            if (curPara > 5) break;
-//            Get the content of the current paragraph and process it to remove stop words and stem the words.
-            List<String> contentTokens = processor.process(contentItem.getContent());
+        // 遍历newsArticle的所有contentItem
+        for (ContentItem contentItem: contentItems){
+            if (contentItem == null){
+                continue;
+            }
+            // 如果当前的subtype不是段落，则取下一个contentItem
+            if (contentItem.getSubtype() == null || !contentItem.getSubtype().equals("paragraph")){
+                continue;
+            }
+            curPara +=1;
+            // 只要前五段，段数大于五段break返回
+            if (curPara > 5){
+                break;
+            }
 
-            for (String contentToken : contentTokens) {
-//                Every time a word is processed, the global article length accumulator is incremented by 1.
-                globalArticleLength.add(1);
-                if (QueriesTerms.contains(contentToken)) {
-//                    When a query term is found, we increment the term's appearance in the article by 1
-                    termCountMap.put(contentToken, termCountMap.getOrDefault(contentToken, 0) + 1);
+            String content = contentItem.getContent();
+            List<String> contentTokens = processor.process(content);
+
+            // 处理当前的content
+            for (String contentToken: contentTokens){
+                totalLengthInAll.add(1);
+                if (QueriesTerms.contains(contentToken)){
+                    termCountMap.put(contentToken, termCountMap.getOrDefault(contentToken,0) + 1);
                     accumulatorMap.get(contentToken).add(1);
                 }
                 articleLength++;
             }
 
         }
-//        Once everything in the article is processed, return a NewsCount Object.
-        return new NewsCount(value, termCountMap, articleLength);
+        // 处理完这篇文章
+        return new NewsCount(value,termCountMap,articleLength);
     }
 }
