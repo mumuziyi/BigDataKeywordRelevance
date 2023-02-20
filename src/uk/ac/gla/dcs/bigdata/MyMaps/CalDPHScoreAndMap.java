@@ -41,6 +41,7 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
         Map<String, Integer> termFreqInCur = value.getTermCountMap();
 
         Set<String> keys = termFreqInCur.keySet();
+
 //        for (String key:keys){
 //            System.out.println("+++++" + key+ "  " +termFreqInCur.get(key));
 //            System.out.println(termFreqInCur.containsKey("financ"));
@@ -61,6 +62,14 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
                         newsNumberInAll.value());
             }
             queryDoubleMap.put(query,score/query.getQueryTerms().size());
+
+//            if (value.getNewsArticle().getTitle()!= null && value.getNewsArticle().getTitle().equals("How D.C. interests sidestep campaign finance limits")){
+//                int i = 0;
+//                for (Query query1: queryDoubleMap.keySet()){
+//                    System.out.println(i + "   " + query1.getOriginalQuery() + "   " + queryDoubleMap.get(query1));
+//                    i++;
+//                }
+//            }
 
 //            if (score/query.getQueryTerms().size()!= 0){
 //                System.out.println(query.getOriginalQuery()+ "  " +value.getNewsArticle().getTitle() + "  "  + score/query.getQueryTerms().size());
