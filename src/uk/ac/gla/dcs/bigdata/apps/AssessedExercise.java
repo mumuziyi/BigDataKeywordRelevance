@@ -130,59 +130,28 @@ public class AssessedExercise {
 		Dataset<NewsDPHScore> NewsDphScore = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsDPHScore.class));
 
-//		List<NewsDPHScore> testList = NewsDphScore.collectAsList();
-
-//		for (NewsDPHScore score: testList){
-//			if (score.getNewsArticle().getTitle()!= null && score.getNewsArticle().getTitle().equals("How D.C. interests sidestep campaign finance limits")){
-//				Map<Query, Double> queryDoubleMap = score.getQueryDoubleMap();
-//				int i = 0;
-//				for (Query query1: queryDoubleMap.keySet()){
-//					System.out.println(i + "   " + query1.getOriginalQuery() + "   " + queryDoubleMap.get(query1));
-//					i++;
-//				}
-//			}
-//		}
-
 		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),
 				Encoders.bean(QueryNewsListStructure.class));
-
-		List<QueryNewsListStructure> queryNewsListStructures = queryNewsListStructureDataset.collectAsList();
-
-		int count = 0;
-		for (QueryNewsListStructure queryNewsListStructure: queryNewsListStructures){
-			Set<Query> set = queryNewsListStructure.getQueryListMap().keySet();
-			for (Query query: set){
-				List<RankedResult> rankedResults = queryNewsListStructure.getQueryListMap().get(query);
-				for (RankedResult rankedResult: rankedResults){
-					count++;
-					if (rankedResult.getScore() > 0){
-						System.out.println(query.getOriginalQuery() + "  " +rankedResult.getArticle().getTitle() +"   " +rankedResult.getScore());
-
-					}
-				}
-			}
-		}
-
-
-
 //
 		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReduce());
 //
-		Map<Query, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
-//
-//		for (Query query: finalAnswerMap.keySet()){
-//			System.out.println("Current query is " + query.getOriginalQuery());
-//			List<RankedResult> rankedResults = finalAnswerMap.get(query);
-//			Collections.sort(rankedResults);
-//			Collections.reverse(rankedResults);
-//			for (RankedResult rankedResult: rankedResults){
-//				if (rankedResult.getScore() > 0){
-//					System.out.println(rankedResult.getArticle().getTitle() + "   " + rankedResult.getScore());
-//				}
-//			}
-//			System.out.println();
-//
-//		}
+		Map<String, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
+
+		System.out.println("----------------");
+		System.out.println(finalAnswerMap.keySet().size());
+		for (String query: finalAnswerMap.keySet()){
+			System.out.println("Current query is " + query);
+			List<RankedResult> rankedResults = finalAnswerMap.get(query);
+			Collections.sort(rankedResults);
+			Collections.reverse(rankedResults);
+			for (RankedResult rankedResult: rankedResults){
+				if (rankedResult.getScore() > 0){
+					System.out.println(rankedResult.getArticle().getTitle() + "   " + rankedResult.getScore());
+				}
+			}
+			System.out.println();
+
+		}
 
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}

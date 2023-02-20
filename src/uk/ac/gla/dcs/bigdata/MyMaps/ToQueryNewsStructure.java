@@ -14,7 +14,7 @@ public class ToQueryNewsStructure implements MapFunction<NewsDPHScore, QueryNews
     @Override
     public QueryNewsListStructure call(NewsDPHScore value) throws Exception {
         // 变为query List，方便后续进行reduce
-        Map<Query, List<RankedResult>> ans = new HashMap<>();
+        Map<String, List<RankedResult>> ans = new HashMap<>();
 
         Map<Query,Double> queryDoubleMap = value.getQueryDoubleMap();
 
@@ -23,7 +23,7 @@ public class ToQueryNewsStructure implements MapFunction<NewsDPHScore, QueryNews
         for (Query query: queries){
             List<RankedResult> cur = new ArrayList<>();
             cur.add(new RankedResult(value.getNewsArticle().getId(),value.getNewsArticle(),queryDoubleMap.get(query)));
-            ans.put(query, cur);
+            ans.put(query.getOriginalQuery(), cur);
         }
 
 //        if (value.getNewsArticle().getTitle()!= null && value.getNewsArticle().getTitle().equals("How D.C. interests sidestep campaign finance limits")){
