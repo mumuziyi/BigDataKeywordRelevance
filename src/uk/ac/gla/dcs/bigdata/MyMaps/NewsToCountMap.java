@@ -56,7 +56,7 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
         List<String> titleList = processor.process(title);
 
         // 处理title的所含的term
-        // 遍历title，如果发现title中当前的单词属于query 的term， 就放进去
+        // 遍历title，如果发现title中当前的单词属于query 的term， 就放进去或者更新（+1）
         for (String titleTerm: titleList){
             totalLengthInAll.add(1);
             articleLength ++;
