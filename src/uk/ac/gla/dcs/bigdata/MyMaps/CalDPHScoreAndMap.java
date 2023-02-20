@@ -62,9 +62,9 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
             }
             queryDoubleMap.put(query,score/query.getQueryTerms().size());
 
-            if (score/query.getQueryTerms().size()!= 0){
-                System.out.println(query.getOriginalQuery()+ "  " +value.getNewsArticle().getTitle() + "  "  + score/query.getQueryTerms().size());
-            }
+//            if (score/query.getQueryTerms().size()!= 0){
+//                System.out.println(query.getOriginalQuery()+ "  " +value.getNewsArticle().getTitle() + "  "  + score/query.getQueryTerms().size());
+//            }
         }
 
         // NewsDPHScore(NewsArticle newsArticle, Map<Query, Double> queryDoubleMap)

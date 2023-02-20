@@ -1,6 +1,7 @@
 package uk.ac.gla.dcs.bigdata.apps;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,11 +15,10 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import org.apache.spark.util.LongAccumulator;
-import uk.ac.gla.dcs.bigdata.MyMaps.CalDPHScoreAndMap;
-import uk.ac.gla.dcs.bigdata.MyMaps.MyFunctions;
-import uk.ac.gla.dcs.bigdata.MyMaps.NewsToCountMap;
+import uk.ac.gla.dcs.bigdata.MyMaps.*;
 import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
 import uk.ac.gla.dcs.bigdata.MyStructure.NewsDPHScore;
+import uk.ac.gla.dcs.bigdata.MyStructure.QueryNewsListStructure;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
@@ -132,10 +132,34 @@ public class AssessedExercise {
 		newsCount.collectAsList();
 
 //		 得到了所有需要的东西，计算DPH值并且进行map
-		Dataset<NewsDPHScore> rankedResultDataset = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,accumulatorMap,totalLengthInAll,newsNumbInAll),
+		Dataset<NewsDPHScore> NewsDphScore = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsDPHScore.class));
 
-		rankedResultDataset.collectAsList();
+		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),Encoders.bean(QueryNewsListStructure.class));
+
+		queryNewsListStructureDataset.collectAsList();
+
+		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReduce());
+
+		Map<Query, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
+
+		for (Query query: finalAnswerMap.keySet()){
+			System.out.println("Current query is " + query.getOriginalQuery());
+			List<RankedResult> rankedResults = finalAnswerMap.get(query);
+			Collections.sort(rankedResults);
+			Collections.reverse(rankedResults);
+			for (RankedResult rankedResult: rankedResults){
+				if (rankedResult.getScore() > 0){
+					System.out.println(rankedResult.getArticle().getTitle() + "   " + rankedResult.getScore());
+				}
+			}
+			System.out.println();
+
+		}
+
+//		queryNewsListStructureDataset.collectAsList();
+
+
 
 //		// 输出测试
 //		List<NewsCount> newsCountList = newsCount.collectAsList();
