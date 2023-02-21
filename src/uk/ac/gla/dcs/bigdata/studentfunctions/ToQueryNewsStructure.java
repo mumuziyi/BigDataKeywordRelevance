@@ -31,12 +31,6 @@ public class ToQueryNewsStructure implements MapFunction<NewsDPHScore, QueryNews
             ans.put(query, cur);
         }
 
-//        if (value.getNewsArticle().getTitle()!= null && value.getNewsArticle().getTitle().equals("How D.C. interests sidestep campaign finance limits")){
-//            for (Query query: ans.keySet()){
-//                System.out.println(query.getOriginalQuery() + "  " + ans.get(query).get(0).getScore());
-//            }
-//        }
-
         return new QueryNewsListStructure(ans);
     }
 }

@@ -1,8 +1,8 @@
 package uk.ac.gla.dcs.bigdata.studentfunctions;
 
 import org.apache.spark.api.java.function.ReduceFunction;
-import uk.ac.gla.dcs.bigdata.studentstructures.QueryNewsListStructure;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
+import uk.ac.gla.dcs.bigdata.studentstructures.QueryNewsListStructure;
 
 import java.util.*;
 
@@ -23,26 +23,22 @@ public class QueryNewsReducer implements ReduceFunction<QueryNewsListStructure> 
 
         Set<String> queries = queryListMap1.keySet();
 
-        for (String query: queries){
+        for (String query : queries) {
 
             List<RankedResult> join = new ArrayList<>();
 
-            // 1 2 都不为空
-            if (queryListMap1.get(query) != null && queryListMap2.get(query) != null){
+//            Consider the case that both element are not null
+            if (queryListMap1.get(query) != null && queryListMap2.get(query) != null) {
                 join.addAll(queryListMap1.get(query));
                 join.addAll(queryListMap2.get(query));
-            }else if (queryListMap1.get(query) != null){ // 1 不为空 2 为空
+            } else if (queryListMap1.get(query) != null) { // The second is null and the first is not null
                 join.addAll(queryListMap1.get(query));
-            }else if (queryListMap2.get(query) != null){ // 2  不空 1 空
+            } else if (queryListMap2.get(query) != null) { // The first is null and the second is not null
                 join.addAll(queryListMap2.get(query));
             }
 
-            newMap.put(query,join);
+            newMap.put(query, join);
         }
-
-
-
-
         return new QueryNewsListStructure(newMap);
     }
 }
