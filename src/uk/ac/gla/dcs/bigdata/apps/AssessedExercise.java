@@ -125,8 +125,18 @@ public class AssessedExercise {
 		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsCount.class));
 
-		Dataset<NewsDPHScore> NewsDphScore = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,accumulatorMap,totalLengthInAll,newsNumbInAll),
+		newsCount.collectAsList();
+
+		Map<String,Long> accumulatorMapLong = new HashMap<>();
+		for (String string: accumulatorMap.keySet()){
+			accumulatorMapLong.put(string,accumulatorMap.get(string).value());
+		}
+
+
+		Dataset<NewsDPHScore> NewsDphScore = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,
+						accumulatorMapLong,totalLengthInAll.value(),newsNumbInAll.value()),
 				Encoders.bean(NewsDPHScore.class));
+
 
 		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),
 				Encoders.bean(QueryNewsListStructure.class));
@@ -168,6 +178,7 @@ public class AssessedExercise {
 		}
 
 		return documentRankings; // replace this with the the list of DocumentRanking output by your topology
+//		return null;
 	}
 
 

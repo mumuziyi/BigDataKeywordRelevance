@@ -12,9 +12,9 @@ public class NewsDPHScore implements Serializable {
 
     NewsArticle newsArticle;
 
-    Map<Query,Double> queryDoubleMap;
+    Map<String ,Double> queryDoubleMap;
 
-    public NewsDPHScore(NewsArticle newsArticle, Map<Query, Double> queryDoubleMap) {
+    public NewsDPHScore(NewsArticle newsArticle, Map<String, Double> queryDoubleMap) {
         super();
         this.newsArticle = newsArticle;
         this.queryDoubleMap = queryDoubleMap;
@@ -28,11 +28,11 @@ public class NewsDPHScore implements Serializable {
         this.newsArticle = newsArticle;
     }
 
-    public Map<Query, Double> getQueryDoubleMap() {
+    public Map<String, Double> getQueryDoubleMap() {
         return queryDoubleMap;
     }
 
-    public void setQueryDoubleMap(Map<Query, Double> queryDoubleMap) {
+    public void setQueryDoubleMap(Map<String, Double> queryDoubleMap) {
         this.queryDoubleMap = queryDoubleMap;
     }
 

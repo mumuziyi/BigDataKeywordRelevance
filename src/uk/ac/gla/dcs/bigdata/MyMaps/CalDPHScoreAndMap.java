@@ -15,10 +15,10 @@ import java.util.Set;
 
 public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
     Broadcast<List<Query>> broadcastQuery;
-    Map<String, LongAccumulator> accumulatorMap;
-    LongAccumulator totalLengthInAll;
+    Map<String, Long> accumulatorMap;
+    Long totalLengthInAll;
 
-    LongAccumulator newsNumberInAll;
+    Long newsNumberInAll;
 
 
     /**
@@ -27,7 +27,7 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
      * @param totalLength A fixed global length of all the articles.
      * @param newsNumberInAll A fixed global number of all articles.
      */
-    public CalDPHScoreAndMap(Broadcast<List<Query>> broadcastQuery, Map<String, LongAccumulator> accumulatorMap, LongAccumulator totalLength, LongAccumulator newsNumberInAll) {
+    public CalDPHScoreAndMap(Broadcast<List<Query>> broadcastQuery, Map<String, Long> accumulatorMap, Long totalLength, Long newsNumberInAll) {
         this.broadcastQuery = broadcastQuery;
         this.accumulatorMap = accumulatorMap;
         this.totalLengthInAll = totalLength;
@@ -37,7 +37,7 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
     @Override
     public NewsDPHScore call(NewsCount value) throws Exception {
 
-        Map<Query, Double> queryDoubleMap = new HashMap<>();
+        Map<String, Double> queryDoubleMap = new HashMap<>();
 //        Retrieve the query list from the broadcast variable.
         List<Query> queries = broadcastQuery.value();
 //        TermCountMap that tracks the count of each query's term in the news article.
@@ -48,16 +48,16 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
             List<String> terms = query.getQueryTerms();
             for (String term : terms) {
 //                Get the occurrence of THE TERM in ALL articles.
-                long termOccurrence = accumulatorMap.get(term).value();
+                long termOccurrence = accumulatorMap.get(term);
                 if (!termFreqInCur.containsKey(term) || value.getTotalLength() == 0) {
                     continue;
                 }
                 int temp1 = termFreqInCur.get(term);
 
                 score += DPHScorer.getDPHScore((short) temp1, (int) termOccurrence, value.getTotalLength(),
-                        totalLengthInAll.value() / newsNumberInAll.value(), newsNumberInAll.value());
+                        totalLengthInAll / newsNumberInAll, newsNumberInAll);
             }
-            queryDoubleMap.put(query, score / query.getQueryTerms().size());
+            queryDoubleMap.put(query.getOriginalQuery(), score / query.getQueryTerms().size());
 
         }
 
