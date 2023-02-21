@@ -37,6 +37,7 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
 
         // 如果title为空，不计入
         if (value.getTitle() == null){
+            value.setContents(null);
             return new NewsCount(value,new HashMap<>(),0);
         }
 
@@ -64,13 +65,13 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
                 termCountMap.put(titleTerm, termCountMap.getOrDefault(titleTerm,0) + 1);
                 // 在accumulator中加，用来保存每个term在所有文章中出现的次数
                 accumulatorMap.get(titleTerm).add(1);
-
             }
         }
 
         // 处理正文
         List<ContentItem> contentItems = value.getContents();
         // 记录当前段落
+        List<ContentItem> newContentItems = new ArrayList<>();
         int curPara = 0;
         // 遍历newsArticle的所有contentItem
         for (ContentItem contentItem: contentItems){
@@ -89,9 +90,11 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
 
             String content = contentItem.getContent();
             List<String> contentTokens = processor.process(content);
+            StringBuilder contentSb = new StringBuilder();
 
             // 处理当前的content
             for (String contentToken: contentTokens){
+                contentSb.append(contentToken + " ");
                 totalLengthInAll.add(1);
                 if (QueriesTerms.contains(contentToken)){
                     termCountMap.put(contentToken, termCountMap.getOrDefault(contentToken,0) + 1);
@@ -99,8 +102,9 @@ public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
                 }
                 articleLength++;
             }
-
+            newContentItems.add(contentItem);
         }
+        value.setContents(newContentItems);
         // 处理完这篇文章
         return new NewsCount(value,termCountMap,articleLength);
     }

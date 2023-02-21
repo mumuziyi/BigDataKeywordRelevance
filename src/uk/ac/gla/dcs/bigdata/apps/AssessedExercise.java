@@ -67,8 +67,8 @@ public class AssessedExercise {
 		
 		// Get the location of the input news articles
 		String newsFile = System.getenv("bigdata.news");
-		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
-//		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
+//		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
 
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
@@ -145,32 +145,21 @@ public class AssessedExercise {
 
 		Map<String, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
 
-		System.out.println("----------------");
-		System.out.println(finalAnswerMap.keySet().size());
+
 		List<DocumentRanking> documentRankings = new ArrayList<>();
+
 		for (String query: finalAnswerMap.keySet()){
 
 			System.out.println("Current query is " + query);
 			List<RankedResult> rankedResults = finalAnswerMap.get(query);
 
-			System.out.println(rankedResults.size());
-
-			if (rankedResults.size() > 1000){
-				rankedResults = rankedResults.subList(0,1000);
-			}
-
 			Collections.sort(rankedResults);
 			Collections.reverse(rankedResults);
 
+			rankedResults = MyFunctions.getTop10(rankedResults);
 
-			int count = 0;
-			for (RankedResult rankedResult: rankedResults){
-				System.out.println(rankedResult.getArticle().getTitle() + "   " + rankedResult.getScore());
-				count++;
-				if (count > 10){
-					break;
-				}
-			}
+			System.out.println(rankedResults.size());
+
 			Query certainQuery = queryList.stream().filter(q -> q.getOriginalQuery().equals(query)).findFirst().get();
 
 			documentRankings.add(new DocumentRanking(certainQuery, rankedResults));
