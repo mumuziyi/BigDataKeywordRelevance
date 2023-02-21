@@ -1,14 +1,12 @@
-package uk.ac.gla.dcs.bigdata.MyMaps;
+package uk.ac.gla.dcs.bigdata.studentfunctions;
 
 import org.apache.spark.api.java.function.ReduceFunction;
-import uk.ac.gla.dcs.bigdata.MyStructure.QueryNewsListStructure;
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
-import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.studentstructures.QueryNewsListStructure;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 
 import java.util.*;
 
-public class QueryNewsReduce implements ReduceFunction<QueryNewsListStructure> {
+public class QueryNewsReducer implements ReduceFunction<QueryNewsListStructure> {
     private static final long serialVersionUID = -4158919171891652902L;
 
     @Override

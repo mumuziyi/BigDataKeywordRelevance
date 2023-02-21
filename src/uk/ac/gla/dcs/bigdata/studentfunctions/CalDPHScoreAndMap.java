@@ -1,17 +1,15 @@
-package uk.ac.gla.dcs.bigdata.MyMaps;
+package uk.ac.gla.dcs.bigdata.studentfunctions;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.util.LongAccumulator;
-import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
-import uk.ac.gla.dcs.bigdata.MyStructure.NewsDPHScore;
+import uk.ac.gla.dcs.bigdata.studentstructures.NewsCount;
+import uk.ac.gla.dcs.bigdata.studentstructures.NewsDPHScore;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
     Broadcast<List<Query>> broadcastQuery;

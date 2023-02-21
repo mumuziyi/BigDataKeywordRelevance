@@ -1,9 +1,9 @@
-package uk.ac.gla.dcs.bigdata.MyMaps;
+package uk.ac.gla.dcs.bigdata.studentfunctions;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.util.LongAccumulator;
-import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
+import uk.ac.gla.dcs.bigdata.studentstructures.NewsCount;
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;

@@ -1,7 +1,5 @@
-package uk.ac.gla.dcs.bigdata.MyStructure;
+package uk.ac.gla.dcs.bigdata.studentstructures;
 
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
-import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 
 import java.io.Serializable;
