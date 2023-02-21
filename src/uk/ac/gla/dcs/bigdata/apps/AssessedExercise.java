@@ -109,50 +109,62 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 
+		// get all queries
 		List<Query> queryList = queries.collectAsList();
 
+		// get all query terms and combine them as a set
 		Set<String> terms = MyFunctions.getTermsSet(queryList);
+		// This map can calculate each terms frequency in all news
 		Map<String, LongAccumulator> accumulatorMap = MyFunctions.getAccumulator(terms,spark);
 
+		// Use accumulator to calculate totalLength of the doc and total number of the News
 		LongAccumulator totalLengthInAll = spark.sparkContext().longAccumulator();
 		LongAccumulator newsNumbInAll = spark.sparkContext().longAccumulator();
 
 		Broadcast<List<Query>> broadcastQuery = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queryList);
 		Broadcast<Set<String>> broadcastTerms = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(terms);
 
+		// Convert to NewsCount Type, reduce the content size of the news
+		// At the same time, get total count for every accumulator
 		Dataset<NewsCount> newsCount = news.map(new NewsToCountMap(broadcastTerms,accumulatorMap,totalLengthInAll,newsNumbInAll),
 				Encoders.bean(NewsCount.class));
 
+		// Action, make sure accumulator count correct
 		newsCount.collectAsList();
 
+		// get number form accumulator
 		Map<String,Long> accumulatorMapLong = new HashMap<>();
 		for (String string: accumulatorMap.keySet()){
 			accumulatorMapLong.put(string,accumulatorMap.get(string).value());
 		}
 
 
+		// calculate DPHScore
+		// get <News,List of DPHScore> pair
 		Dataset<NewsDPHScore> NewsDphScore = newsCount.map(new CalDPHScoreAndMap(broadcastQuery,
 						accumulatorMapLong,totalLengthInAll.value(),newsNumbInAll.value()),
 				Encoders.bean(NewsDPHScore.class));
 
-
+		// map to Another  type which can be used in reduce process and get required result
 		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),
 				Encoders.bean(QueryNewsListStructure.class));
 
+		// get the  <query, ListOfNews> pairs.
 		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReducer());
 
 		Map<String, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
-
-
 		List<DocumentRanking> documentRankings = new ArrayList<>();
 
+		// Process the <query, ListOfNews> pairs.
 		for (String query: finalAnswerMap.keySet()){
 
 			List<RankedResult> rankedResults = finalAnswerMap.get(query);
 
+			// Sort result, we want Top 10
 			Collections.sort(rankedResults);
 			Collections.reverse(rankedResults);
 
+			// Get Top10 by DPH score and delete some news by title distance
 			rankedResults = MyFunctions.getTop10(rankedResults);
 
 			Query certainQuery = queryList.stream().filter(q -> q.getOriginalQuery().equals(query)).findFirst().get();

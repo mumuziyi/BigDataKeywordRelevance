@@ -6,6 +6,11 @@ import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 
 import java.util.*;
 
+/**
+ * This class is used to reduce QueryNewsListStructure according to the original query.
+ * connect tow List if they have same original query
+ */
+
 public class QueryNewsReducer implements ReduceFunction<QueryNewsListStructure> {
     private static final long serialVersionUID = -4158919171891652902L;
 
