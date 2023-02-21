@@ -7,6 +7,9 @@ import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 
 import java.util.*;
+/**
+ * This class contains some functions needed in the process
+ */
 
 
 public class MyFunctions {
