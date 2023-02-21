@@ -11,13 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-/**
- * This class is used to Calculate DPH Score
- * MapFunction convert (news, allKindsOfCount) Pair to (news, List(Query,DPHScore))
- *
- */
-
 public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
     Broadcast<List<Query>> broadcastQuery;
     Map<String, Long> accumulatorMap;
@@ -25,6 +18,13 @@ public class CalDPHScoreAndMap implements MapFunction<NewsCount, NewsDPHScore> {
 
     Long newsNumberInAll;
 
+
+    /**
+     * @param broadcastQuery A list of Query objects that are broadcast to all nodes.
+     * @param accumulatorMap A map that keeps track of each query term's appearances in ALL articles.
+     * @param totalLength A fixed global length of all the articles.
+     * @param newsNumberInAll A fixed global number of all articles.
+     */
     public CalDPHScoreAndMap(Broadcast<List<Query>> broadcastQuery, Map<String, Long> accumulatorMap, Long totalLength, Long newsNumberInAll) {
         this.broadcastQuery = broadcastQuery;
         this.accumulatorMap = accumulatorMap;

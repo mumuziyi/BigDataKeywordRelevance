@@ -12,9 +12,6 @@ import java.util.*;
 
 /**
  * This converts a NewsArticle into a {@link NewsCount} Object.
- * Finish counting all query terms in one loop
- * NewsCount contains (NewsArticle, allKindsOfCount) pair,
- * which can be used to calculate DPHScore
  */
 public class NewsToCountMap implements MapFunction<NewsArticle, NewsCount> {
 

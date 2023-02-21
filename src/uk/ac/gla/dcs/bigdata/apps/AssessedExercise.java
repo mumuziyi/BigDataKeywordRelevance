@@ -12,18 +12,16 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import org.apache.spark.util.LongAccumulator;
-import uk.ac.gla.dcs.bigdata.MyMaps.*;
-import uk.ac.gla.dcs.bigdata.MyStructure.NewsCount;
-import uk.ac.gla.dcs.bigdata.MyStructure.NewsDPHScore;
-import uk.ac.gla.dcs.bigdata.MyStructure.QueryNewsListStructure;
+import uk.ac.gla.dcs.bigdata.studentfunctions.*;
+import uk.ac.gla.dcs.bigdata.studentstructures.NewsCount;
+import uk.ac.gla.dcs.bigdata.studentstructures.NewsDPHScore;
+import uk.ac.gla.dcs.bigdata.studentstructures.QueryNewsListStructure;
 import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
-
-import static uk.ac.gla.dcs.bigdata.MyMaps.MyFunctions.getAccumulator;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -67,8 +65,8 @@ public class AssessedExercise {
 		
 		// Get the location of the input news articles
 		String newsFile = System.getenv("bigdata.news");
-//		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
-		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
+		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+//		if (newsFile==null) newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
 
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
@@ -141,7 +139,7 @@ public class AssessedExercise {
 		Dataset<QueryNewsListStructure> queryNewsListStructureDataset = NewsDphScore.map(new ToQueryNewsStructure(),
 				Encoders.bean(QueryNewsListStructure.class));
 
-		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReduce());
+		QueryNewsListStructure finalAnswer = queryNewsListStructureDataset.reduce(new QueryNewsReducer());
 
 		Map<String, List<RankedResult>> finalAnswerMap= finalAnswer.getQueryListMap();
 
@@ -150,15 +148,12 @@ public class AssessedExercise {
 
 		for (String query: finalAnswerMap.keySet()){
 
-			System.out.println("Current query is " + query);
 			List<RankedResult> rankedResults = finalAnswerMap.get(query);
 
 			Collections.sort(rankedResults);
 			Collections.reverse(rankedResults);
 
 			rankedResults = MyFunctions.getTop10(rankedResults);
-
-			System.out.println(rankedResults.size());
 
 			Query certainQuery = queryList.stream().filter(q -> q.getOriginalQuery().equals(query)).findFirst().get();
 

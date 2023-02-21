@@ -7,10 +7,6 @@ import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 
 import java.util.*;
 
-/**
- * This class is used to Convert (news,scoreList) to (Query, NewsList), and use this kind of date to reduce
- */
-
 public class ToQueryNewsStructure implements MapFunction<NewsDPHScore, QueryNewsListStructure> {
 
     @Override
