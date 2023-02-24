@@ -1,7 +1,10 @@
-# Please check code in Branch ***NewStructureRewrite***
+# Contributors: 
 
-There are two versions of our code.
-code in ***Main*** and code in ***NewStructureRewrite*** Branch. 
+**Chen Li (2738030L)**: Use two account, Chen Li(2738030L@student.gla.ac.uk)  Chen/MuMu(2715228386@qq.com)
 
-Both of them works correctly, But our project in NewStructureRewrite works more efficiently.
-We decided to use it as our final version of the assessment.
+**Yiyu Zhong()**: Use account...
+
+
+
+
+
