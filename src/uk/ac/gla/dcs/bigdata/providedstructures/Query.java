@@ -44,10 +44,5 @@ public class Query implements Serializable{
 		this.queryTermCounts = queryTermCounts;
 	}
 
-	
-	
-	
-	
-	
-	
+
 }
