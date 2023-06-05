@@ -1,4 +1,4 @@
-package uk.ac.gla.dcs.bigdata.providedstructures;
+package bin.bigdata.providedstructures;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;

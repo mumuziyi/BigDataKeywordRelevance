@@ -1,4 +1,4 @@
-package uk.ac.gla.dcs.bigdata.providedutilities;
+package bin.bigdata.providedutilities;
 
 import org.apache.commons.text.similarity.LevenshteinDistance;
 

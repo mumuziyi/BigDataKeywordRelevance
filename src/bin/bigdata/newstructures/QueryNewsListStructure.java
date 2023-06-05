@@ -1,6 +1,6 @@
-package uk.ac.gla.dcs.bigdata.newstructures;
+package bin.bigdata.newstructures;
 
-import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
+import bin.bigdata.providedstructures.RankedResult;
 
 import java.io.Serializable;
 import java.util.List;

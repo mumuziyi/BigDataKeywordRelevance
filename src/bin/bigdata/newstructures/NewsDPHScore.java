@@ -1,6 +1,6 @@
-package uk.ac.gla.dcs.bigdata.newstructures;
+package bin.bigdata.newstructures;
 
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
+import bin.bigdata.providedstructures.NewsArticle;
 
 import java.io.Serializable;
 import java.util.Map;

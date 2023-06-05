@@ -1,9 +1,9 @@
-package uk.ac.gla.dcs.bigdata.newfunctions;
+package bin.bigdata.newfunctions;
 
 import org.apache.spark.api.java.function.MapFunction;
-import uk.ac.gla.dcs.bigdata.newstructures.NewsDPHScore;
-import uk.ac.gla.dcs.bigdata.newstructures.QueryNewsListStructure;
-import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
+import bin.bigdata.newstructures.NewsDPHScore;
+import bin.bigdata.newstructures.QueryNewsListStructure;
+import bin.bigdata.providedstructures.RankedResult;
 
 import java.util.*;
 

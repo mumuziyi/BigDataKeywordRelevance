@@ -1,12 +1,12 @@
-package uk.ac.gla.dcs.bigdata.providedfunctions;
+package bin.bigdata.providedfunctions;
 
 import java.util.List;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Row;
 
-import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
+import bin.bigdata.providedstructures.Query;
+import bin.bigdata.providedutilities.TextPreProcessor;
 
 public class QueryFormaterMap implements MapFunction<Row,Query> {
 

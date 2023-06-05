@@ -1,11 +1,6 @@
-package uk.ac.gla.dcs.bigdata;
+package bin.bigdata;
 
-import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import bin.bigdata.providedutilities.TextDistanceCalculator;
 
 public class Test {
     public static void main(String[] args) {

@@ -1,11 +1,11 @@
-package uk.ac.gla.dcs.bigdata.providedfunctions;
+package bin.bigdata.providedfunctions;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Row;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
+import bin.bigdata.providedstructures.NewsArticle;
 
 /**
  * Converts a Row containing a String Json news article into a NewsArticle object 

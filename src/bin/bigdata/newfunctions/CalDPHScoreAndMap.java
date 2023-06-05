@@ -1,11 +1,11 @@
-package uk.ac.gla.dcs.bigdata.newfunctions;
+package bin.bigdata.newfunctions;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
-import uk.ac.gla.dcs.bigdata.newstructures.NewsCount;
-import uk.ac.gla.dcs.bigdata.newstructures.NewsDPHScore;
-import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
+import bin.bigdata.newstructures.NewsCount;
+import bin.bigdata.newstructures.NewsDPHScore;
+import bin.bigdata.providedstructures.Query;
+import bin.bigdata.providedutilities.DPHScorer;
 
 import java.util.HashMap;
 import java.util.List;

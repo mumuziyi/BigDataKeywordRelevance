@@ -1,10 +1,10 @@
-package uk.ac.gla.dcs.bigdata.newfunctions;
+package bin.bigdata.newfunctions;
 
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.util.LongAccumulator;
-import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
+import bin.bigdata.providedstructures.Query;
+import bin.bigdata.providedstructures.RankedResult;
+import bin.bigdata.providedutilities.TextDistanceCalculator;
 
 import java.util.*;
 /**

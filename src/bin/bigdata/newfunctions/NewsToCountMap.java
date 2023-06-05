@@ -1,12 +1,12 @@
-package uk.ac.gla.dcs.bigdata.newfunctions;
+package bin.bigdata.newfunctions;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.util.LongAccumulator;
-import uk.ac.gla.dcs.bigdata.newstructures.NewsCount;
-import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
-import uk.ac.gla.dcs.bigdata.providedutilities.TextPreProcessor;
+import bin.bigdata.newstructures.NewsCount;
+import bin.bigdata.providedstructures.ContentItem;
+import bin.bigdata.providedstructures.NewsArticle;
+import bin.bigdata.providedutilities.TextPreProcessor;
 
 import java.util.*;
 

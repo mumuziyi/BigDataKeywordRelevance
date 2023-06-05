@@ -1,4 +1,4 @@
-package uk.ac.gla.dcs.bigdata.apps;
+package bin.bigdata.apps;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -8,16 +8,16 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.util.LongAccumulator;
-import uk.ac.gla.dcs.bigdata.providedfunctions.NewsFormaterMap;
-import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
-import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
-import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
-import uk.ac.gla.dcs.bigdata.providedstructures.Query;
-import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
-import uk.ac.gla.dcs.bigdata.newfunctions.*;
-import uk.ac.gla.dcs.bigdata.newstructures.NewsCount;
-import uk.ac.gla.dcs.bigdata.newstructures.NewsDPHScore;
-import uk.ac.gla.dcs.bigdata.newstructures.QueryNewsListStructure;
+import bin.bigdata.providedfunctions.NewsFormaterMap;
+import bin.bigdata.providedfunctions.QueryFormaterMap;
+import bin.bigdata.providedstructures.DocumentRanking;
+import bin.bigdata.providedstructures.NewsArticle;
+import bin.bigdata.providedstructures.Query;
+import bin.bigdata.providedstructures.RankedResult;
+import bin.bigdata.newfunctions.*;
+import bin.bigdata.newstructures.NewsCount;
+import bin.bigdata.newstructures.NewsDPHScore;
+import bin.bigdata.newstructures.QueryNewsListStructure;
 
 import java.io.File;
 import java.util.*;
