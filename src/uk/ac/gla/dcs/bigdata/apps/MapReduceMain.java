@@ -14,10 +14,10 @@ import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
-import uk.ac.gla.dcs.bigdata.studentfunctions.*;
-import uk.ac.gla.dcs.bigdata.studentstructures.NewsCount;
-import uk.ac.gla.dcs.bigdata.studentstructures.NewsDPHScore;
-import uk.ac.gla.dcs.bigdata.studentstructures.QueryNewsListStructure;
+import uk.ac.gla.dcs.bigdata.newfunctions.*;
+import uk.ac.gla.dcs.bigdata.newstructures.NewsCount;
+import uk.ac.gla.dcs.bigdata.newstructures.NewsDPHScore;
+import uk.ac.gla.dcs.bigdata.newstructures.QueryNewsListStructure;
 
 import java.io.File;
 import java.util.*;
@@ -31,7 +31,7 @@ import java.util.*;
  *
  * @author Richard
  */
-public class AssessedExercise {
+public class MapReduceMain {
 
 
     public static void main(String[] args) {

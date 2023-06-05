@@ -1,4 +1,4 @@
-package uk.ac.gla.dcs.bigdata.studentfunctions;
+package uk.ac.gla.dcs.bigdata.newfunctions;
 
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.util.LongAccumulator;

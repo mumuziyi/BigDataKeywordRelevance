@@ -1,4 +1,4 @@
-package uk.ac.gla.dcs.bigdata.studentstructures;
+package uk.ac.gla.dcs.bigdata.newstructures;
 
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 

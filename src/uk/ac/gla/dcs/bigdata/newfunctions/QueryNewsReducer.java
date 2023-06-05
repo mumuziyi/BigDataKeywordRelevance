@@ -1,8 +1,8 @@
-package uk.ac.gla.dcs.bigdata.studentfunctions;
+package uk.ac.gla.dcs.bigdata.newfunctions;
 
 import org.apache.spark.api.java.function.ReduceFunction;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
-import uk.ac.gla.dcs.bigdata.studentstructures.QueryNewsListStructure;
+import uk.ac.gla.dcs.bigdata.newstructures.QueryNewsListStructure;
 
 import java.util.*;
 

@@ -1,8 +1,8 @@
-package uk.ac.gla.dcs.bigdata.studentfunctions;
+package uk.ac.gla.dcs.bigdata.newfunctions;
 
 import org.apache.spark.api.java.function.MapFunction;
-import uk.ac.gla.dcs.bigdata.studentstructures.NewsDPHScore;
-import uk.ac.gla.dcs.bigdata.studentstructures.QueryNewsListStructure;
+import uk.ac.gla.dcs.bigdata.newstructures.NewsDPHScore;
+import uk.ac.gla.dcs.bigdata.newstructures.QueryNewsListStructure;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 
 import java.util.*;
