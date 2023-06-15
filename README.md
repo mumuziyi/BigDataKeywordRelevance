@@ -11,5 +11,12 @@
 
 
 
+The program sorts the relevance of various files in the "TREC_Washington_Post_collection.v3.example.json" file based on the keywords in the "data/queries.list" file. The top ten results of the sorting are outputted to the "result" file.
 
+To run the program:
+
+Import the necessary packages using Maven.
+Run the "MapReduceMain" class.
+View the relevance of each article corresponding to each keyword in the "Result" file.
+Currently, I am in the process of organizing various principles related to transitioning from Hadoop to Spark. You can start by reading the column "Big Data Data Processing Principles" (大数据 数据处理原理) available at [https://juejin.cn/column/7238519458624716861]. In the future, I will provide a detailed explanation of this program.
 
