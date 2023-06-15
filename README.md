@@ -18,5 +18,5 @@ To run the program:
 Import the necessary packages using Maven.
 Run the "MapReduceMain" class.
 View the relevance of each article corresponding to each keyword in the "Result" file.
-Currently, I am in the process of organizing various principles related to transitioning from Hadoop to Spark. You can start by reading the column "Big Data Data Processing Principles"  available at [大数据 数据处理原理] (https://juejin.cn/column/7238519458624716861). In the future, I will provide a detailed explanation of this program.
+Currently, I am in the process of organizing various principles related to transitioning from Hadoop to Spark. You can start by reading the column "Big Data Data Processing Principles"  available at [大数据 数据处理原理](https://juejin.cn/column/7238519458624716861). In the future, I will provide a detailed explanation of this program.
 
